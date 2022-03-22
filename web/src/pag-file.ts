@@ -10,6 +10,10 @@ import { wasmAwaitRewind, wasmAsyncMethod } from './utils/decorators';
 import { ErrorCode } from './utils/error-map';
 import { Log } from './utils/log';
 import { proxyVector } from './utils/type-utils';
+/* #if _WECHAT
+import { isWechatMiniProgram } from './utils/ua';
+//#else */
+// #endif
 
 @wasmAwaitRewind
 export class PAGFile extends PAGComposition {
