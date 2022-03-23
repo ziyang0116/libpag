@@ -18,18 +18,19 @@ import { isWechatMiniProgram } from './utils/ua';
 @wasmAwaitRewind
 export class PAGFile extends PAGComposition {
   public static module: PAG;
+
   /**
    * Load pag file from file.
    */
   @wasmAsyncMethod
   public static async load(data: File | Blob | ArrayBuffer) {
     let buffer: ArrayBuffer | null = null;
-    if (data instanceof File) {
+    if (data instanceof ArrayBuffer) {
+      buffer = data;
+    } else if (data instanceof File) {
       buffer = (await readFile(data)) as ArrayBuffer;
     } else if (data instanceof Blob) {
       buffer = (await readFile(new File([data], ''))) as ArrayBuffer;
-    } else if (data instanceof ArrayBuffer) {
-      buffer = data;
     }
     if (buffer === null) {
       Log.errorByCode(ErrorCode.PagFileDataError);
@@ -37,6 +38,7 @@ export class PAGFile extends PAGComposition {
       return PAGFile.loadFromBuffer(buffer);
     }
   }
+
   /**
    * Load pag file from arrayBuffer
    */

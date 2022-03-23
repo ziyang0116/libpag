@@ -28,8 +28,8 @@ export class PAGView {
       //#else */
       canvasElement = document.getElementById(canvas.substr(1)) as HTMLCanvasElement;
       // #endif
-    } else if (canvas instanceof HTMLCanvasElement) {
-      canvasElement = canvas;
+    } else {
+      canvasElement = canvas as HTMLCanvasElement;
     }
     /* #if _WECHAT
     const dpr = wx.getSystemInfoSync().pixelRatio
