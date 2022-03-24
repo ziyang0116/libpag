@@ -11,32 +11,32 @@ Page({
   },
   onLoad() {},
   onReady() {
-    console.log("globalData:", app.globalData);
+    console.log('globalData:', app.globalData);
     this.createPag();
   },
   loadPagFile() {
     wx.request({
       url: this.data.pagUrl,
-      responseType: "arraybuffer",
+      responseType: 'arraybuffer',
       success: (res) => {
         this.init(res.data);
       },
       fail(err) {
-        console.log("loadPage error:", err);
+        console.log('loadPage error:', err);
       },
     });
   },
   createPag() {
     app.globalData.libpag
       .PAGInit({
-        locateFile: (file) => "/utils/libpag/" + file,
+        locateFile: (file) => '/utils/' + file,
       })
       .then((PAG) => {
         this.PAG = PAG;
         this.loadPagFile();
       });
   },
-   init(arraybuffer) {
+  init(arraybuffer) {
     const pagFile = this.PAG.PAGFile.loadFromBuffer(arraybuffer);
     const pagWidth = pagFile.width();
     const pagHeight = pagFile.height();
@@ -45,11 +45,11 @@ Page({
       canvasH: pagHeight,
       pagShow: true,
     });
-    console.log("pag width:", pagWidth, pagHeight);
+    console.log('pag width:', pagWidth, pagHeight);
 
     const queryT = wx.createSelectorQuery();
     queryT
-      .select("#pag")
+      .select('#pag')
       .fields({ node: true, size: true })
       .exec(async (res) => {
         const canvas = res[0].node;
