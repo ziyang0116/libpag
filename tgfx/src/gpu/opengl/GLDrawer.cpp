@@ -227,7 +227,6 @@ void GLDrawer::draw(DrawArgs args, std::unique_ptr<GLDrawOp> op) const {
                             reinterpret_cast<void*>(attribute.offset));
     gl->enableVertexAttribArray(static_cast<unsigned>(attribute.location));
   }
-  gl->bindBuffer(GL_ARRAY_BUFFER, 0);
   auto indexBuffer = op->getIndexBuffer(args);
   if (indexBuffer) {
     gl->bindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer->bufferID());
@@ -239,6 +238,7 @@ void GLDrawer::draw(DrawArgs args, std::unique_ptr<GLDrawOp> op) const {
   if (vertexArray > 0) {
     gl->bindVertexArray(0);
   }
+  gl->bindBuffer(GL_ARRAY_BUFFER, 0);
   CheckGLError(args.context);
 }
 }  // namespace tgfx

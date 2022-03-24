@@ -279,4 +279,14 @@ export const replaceFunctionConfig = [
     start: 'libpag.wasm',
     replaceStr: 'libpag.wasm.br',
   },
+  {
+    name: 'fix get gl get framebuffer',
+    type: 'string',
+    start: 'var result = GLctx.getParameter(name_);',
+    replaceStr: `var result = GLctx.getParameter(name_);
+    if(result === null || result === undefined) {
+      return 0;
+    }
+    `,
+  },
 ];

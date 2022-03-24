@@ -32,7 +32,7 @@ export class PAGView {
       canvasElement = canvas as HTMLCanvasElement;
     }
     /* #if _WECHAT
-    const dpr = wx.getSystemInfoSync().pixelRatio
+    const dpr = 2;
     //#else */
     const dpr = window.devicePixelRatio;
     // #endif
@@ -65,7 +65,7 @@ export class PAGView {
       // #endif
       const pagPlayer = this.module.PAGPlayer.create();
       const pagView = new PAGView(pagPlayer);
-      if (!(gl instanceof WebGLRenderingContext)) {
+      if (!gl) {
         Log.errorByCode(ErrorCode.CanvasContextIsNotWebGL);
       } else {
         pagView.contextID = this.module.GL.registerContext(gl, { majorVersion: 1, minorVersion: 0 });
@@ -258,8 +258,8 @@ export class PAGView {
    * Call this method to render current position immediately. If the play() method is already
    * called, there is no need to call it. Returns true if the content has changed.
    */
-  public async flush() {
-    await this.player.flush();
+  public flush() {
+    this.player.flush();
     this.eventManager.emit(PAGViewListenerEvent.onAnimationFlushed, this);
   }
   /**
