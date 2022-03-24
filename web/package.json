@@ -15,7 +15,9 @@
     "prettier:fix": "prettier --write \"src/**/*.ts\"",
     "test": "cypress run --browser chrome",
     "server": "http-server -p 8080 . -c-1",
-    "doc": "rimraf api-docs && typedoc --entryPointStrategy expand ./src"
+    "doc": "rimraf api-docs && typedoc --entryPointStrategy expand ./src",
+    "wx:dev": "rollup -c ./script/rollup.config.wx.js -w",
+    "wx:brotli": "brotli ./lib/libpag.wasm && cp -f ./lib/libpag.wasm.br ./demo/mini-program/utils/libpag.wasm.br && rimraf ./lib/libpag.wasm.br"
   },
   "repository": {
     "type": "git",

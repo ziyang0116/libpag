@@ -13,3 +13,5 @@ api-docs
 demo/*.js
 cypress/videos
 cypress/screenshots
+demo/mini-program/utils/libpag.wasm.br
+demo/mini-program/utils/libpag.wx.js

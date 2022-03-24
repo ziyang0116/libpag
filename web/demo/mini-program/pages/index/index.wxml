@@ -1,0 +1,4 @@
+<!-- index.wxml -->
+<view class="container">
+  <canvas id="pag" type="webgl" style="width: {{ canvasW }}rpx; height: {{ canvasH }}rpx" wx:if="{{ pagShow }}"></canvas>
+</view>
