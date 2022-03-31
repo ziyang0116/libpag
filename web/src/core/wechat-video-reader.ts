@@ -36,50 +36,24 @@ export class VideoReader {
     fs.writeFileSync(this.fileTarget, mp4.buffer, 'utf8');
     this.videoDecoder = wx.createVideoDecoder();
     this.videoDecoderStart(this.fileTarget);
-    this.videoDecoder.on('ended', async () => {
-      await this.videoDecoderSeek(0);
-      this.currentFrame = -1;
-    });
     this.framebuffer = null;
   }
-  public videoDecoderSeek(position: number) {
-    return new Promise((resolve) => {
-      const onSeeked = () => {
-        this.videoDecoder.off('seek', onSeeked);
-        resolve(true);
-      };
-      this.videoDecoder.on('seek', onSeeked);
-      this.videoDecoder.seek(position);
-    });
-  }
-  public getFrameData() {
-    return new Promise((resolve) => {
-      const loop = () => {
-        const frameData = this.videoDecoder.getFrameData();
-        if (frameData !== null) {
-          this.framebuffer = frameData;
-          resolve(true);
-          return;
-        }
-        setTimeout(() => {
-          loop();
-        }, 1);
-      };
-      loop();
-    });
-  }
-  public prepareAsync(targetFrame: number) {
+
+  public async prepare(targetFrame: number) {
     if (targetFrame === this.currentFrame) {
-      this.currentFrame = targetFrame;
-      return Promise.resolve(true);
+      return true;
     } else {
       if (!this.videoDecoderReady) {
-        this.videoDecoderStart(this.fileTarget);
+        await this.waitVideoDecoderStarted();
+      } else {
+        await this.videoDecoderSeek(Math.floor((targetFrame / this.frameRate) * 1000));
       }
       this.currentFrame = targetFrame;
-      return Promise.resolve(this.getFrameData());
+      this.framebuffer = await this.getFrameData();
+      return true;
     }
   }
+
   public renderToTexture(GL: EmscriptenGL, textureID: number) {
     const gl = GL.currentContext.GLctx;
     gl.bindTexture(gl.TEXTURE_2D, GL.textures[textureID]);
@@ -92,12 +66,14 @@ export class VideoReader {
       0,
       gl.RGBA,
       gl.UNSIGNED_BYTE,
-      new Uint8Array(this.framebuffer.data, 0, this.framebuffer.data.length),
+      new Uint8Array(this.framebuffer.data),
     );
   }
+
   public onDestroy() {
     this.currentFrame = -1;
   }
+
   private videoDecoderStart(path: string) {
     return new Promise((resolve) => {
       const onStarted = () => {
@@ -107,6 +83,43 @@ export class VideoReader {
       };
       this.videoDecoder.on('start', onStarted);
       this.videoDecoder.start({ source: path, mode: 0 });
+    });
+  }
+
+  private waitVideoDecoderStarted() {
+    return new Promise((resolve) => {
+      const onStarted = () => {
+        this.videoDecoder.off('start', onStarted);
+        resolve(true);
+      };
+      this.videoDecoder.on('start', onStarted);
+    });
+  }
+
+  private videoDecoderSeek(position: number) {
+    return new Promise((resolve) => {
+      const onSeeked = () => {
+        this.videoDecoder.off('seek', onSeeked);
+        resolve(true);
+      };
+      this.videoDecoder.on('seek', onSeeked);
+      this.videoDecoder.seek(position);
+    });
+  }
+
+  private getFrameData() {
+    return new Promise((resolve) => {
+      const loop = () => {
+        const frameData = this.videoDecoder.getFrameData();
+        if (frameData !== null) {
+          resolve(frameData);
+          return;
+        }
+        setTimeout(() => {
+          loop();
+        }, 1);
+      };
+      loop();
     });
   }
 }

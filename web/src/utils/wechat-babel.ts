@@ -30,3 +30,7 @@ export const cancelAnimationFrame = (() => {
     return clearTimeout(timer);
   };
 })();
+
+export const performance = (() => {
+  return wx.getPerformance();
+})();

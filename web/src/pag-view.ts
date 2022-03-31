@@ -8,7 +8,7 @@ import { ErrorCode } from './utils/error-map';
 import { SCREEN_2560_RESOLUTION } from './constant';
 /* #if _WECHAT
 import { isWechatMiniProgram } from './utils/ua';
-import { getWechatElementById, requestAnimationFrame, cancelAnimationFrame } from './utils/wechat-babel';
+import { getWechatElementById, requestAnimationFrame, cancelAnimationFrame, performance } from './utils/wechat-babel';
 //#else */
 // #endif
 
@@ -39,12 +39,17 @@ export class PAGView {
     if (!canvasElement) {
       Log.errorByCode(ErrorCode.CanvasIsNotFound);
     } else {
+      /* #if _WECHAT
+      const displayWidth = canvasElement.width;
+      const displayHeight = canvasElement.height;
+      //#else */
       const styleWidth = Number(canvasElement.style.width.replace('px', ''));
       const styleHeight = Number(canvasElement.style.height.replace('px', ''));
       const displayWidth = styleWidth > 0 ? styleWidth : canvasElement.width;
       const displayHeight = styleHeight > 0 ? styleHeight : canvasElement.height;
-      const rawWidth = displayWidth * window.devicePixelRatio;
-      const rawHeight = displayHeight * window.devicePixelRatio;
+      // #endif
+      const rawWidth = displayWidth * dpr;
+      const rawHeight = displayHeight * dpr;
 
       if (rawWidth > SCREEN_2560_RESOLUTION || rawHeight > SCREEN_2560_RESOLUTION) {
         Log.warn(
@@ -56,8 +61,8 @@ export class PAGView {
       canvasElement.style.width = `${displayWidth}px`;
       canvasElement.style.height = `${displayHeight}px`;
       // #endif
-      canvasElement.width = rawWidth * dpr;
-      canvasElement.height = rawHeight * dpr;
+      canvasElement.width = rawWidth;
+      canvasElement.height = rawHeight;
       /* #if _WECHAT
       const gl = canvasElement.getContext('webgl', { alpha: true });
       //#else */
