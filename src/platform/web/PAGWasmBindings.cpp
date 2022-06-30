@@ -47,7 +47,9 @@ EMSCRIPTEN_BINDINGS(pag) {
       .function("_matrix", &PAGLayer::matrix)
       .function("_setMatrix", &PAGLayer::setMatrix)
       .function("_resetMatrix", &PAGLayer::resetMatrix)
-      .function("_getTotalMatrix", &PAGLayer::getTotalMatrix)
+      .function("_getTotalMatrix", optional_override([](PAGLayer& pagLayer) {
+                  return ToTGFX(pagLayer.getTotalMatrix());
+                }))
       .function("_alpha", &PAGLayer::alpha)
       .function("_setAlpha", &PAGLayer::setAlpha)
       .function("_visible", &PAGLayer::visible)
