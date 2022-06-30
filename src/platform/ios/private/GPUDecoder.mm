@@ -30,13 +30,20 @@ GPUDecoder::GPUDecoder(const VideoFormat& format)
   isInitialized = initVideoToolBox(format.headers, format.mimeType);
 }
 
-GPUDecoder::~GPUDecoder() {
-  if (session) {
+static void InvalidateSessionAsync(VTDecompressionSessionRef session) {
+  if (session == nullptr) {
+    return;
+  }
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
     VTDecompressionSessionFinishDelayedFrames(session);
     VTDecompressionSessionInvalidate(session);
     CFRelease(session);
-    session = nullptr;
-  }
+  });
+}
+
+GPUDecoder::~GPUDecoder() {
+  InvalidateSessionAsync(session);
+  session = nullptr;
 
   if (videoFormatDescription) {
     CFRelease(videoFormatDescription);
@@ -123,12 +130,8 @@ bool GPUDecoder::initVideoToolBox(const std::vector<std::shared_ptr<tgfx::Data>>
 }
 
 bool GPUDecoder::resetVideoToolBox() {
-  if (session) {
-    VTDecompressionSessionFinishDelayedFrames(session);
-    VTDecompressionSessionInvalidate(session);
-    CFRelease(session);
-    session = nullptr;
-  }
+  InvalidateSessionAsync(session);
+  session = nullptr;
 
   // create decompression session
   CFDictionaryRef attrs = NULL;
