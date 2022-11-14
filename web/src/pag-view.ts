@@ -3,7 +3,7 @@ import { PAGPlayer } from './pag-player';
 import { EventManager, Listener } from './utils/event-manager';
 import { PAGSurface } from './pag-surface';
 import { destroyVerify } from './utils/decorators';
-import { isOffscreenCanvas } from './utils/canvas';
+import { calculateDisplaySize, isOffscreenCanvas } from './utils/canvas';
 import { BackendContext } from './core/backend-context';
 import { PAGModule } from './pag-module';
 import { RenderCanvas } from './core/render-canvas';
@@ -45,7 +45,7 @@ export class PAGView {
     let canvasElement: HTMLCanvasElement | OffscreenCanvas | null = null;
     if (typeof canvas === 'string') {
       canvasElement = document.getElementById(canvas.substr(1)) as HTMLCanvasElement;
-    } else if (canvas instanceof HTMLCanvasElement) {
+    } else if (typeof window !== 'undefined' && canvas instanceof window.HTMLCanvasElement) {
       canvasElement = canvas;
     } else if (isOffscreenCanvas(canvas)) {
       canvasElement = canvas;
@@ -412,7 +412,7 @@ export class PAGView {
     if (!this.isPlaying) {
       return;
     }
-    this.timer = window.requestAnimationFrame(async () => {
+    this.timer = globalThis.requestAnimationFrame(async () => {
       await this.flushLoop();
     });
     if (this.flushingNextFrame) return;
@@ -461,7 +461,7 @@ export class PAGView {
 
   protected clearTimer(): void {
     if (this.timer) {
-      window.cancelAnimationFrame(this.timer);
+      globalThis.cancelAnimationFrame(this.timer);
       this.timer = null;
     }
   }
@@ -477,34 +477,13 @@ export class PAGView {
       return;
     }
 
-    let displaySize: { width: number; height: number };
     const canvas = this.canvasElement as HTMLCanvasElement;
-    const styleDeclaration = window.getComputedStyle(canvas, null);
-    const computedSize = {
-      width: Number(styleDeclaration.width.replace('px', '')),
-      height: Number(styleDeclaration.height.replace('px', '')),
-    };
-    if (computedSize.width > 0 && computedSize.height > 0) {
-      displaySize = computedSize;
-    } else {
-      const styleSize = {
-        width: Number(canvas.style.width.replace('px', '')),
-        height: Number(canvas.style.height.replace('px', '')),
-      };
-      if (styleSize.width > 0 && styleSize.height > 0) {
-        displaySize = styleSize;
-      } else {
-        displaySize = {
-          width: canvas.width,
-          height: canvas.height,
-        };
-      }
-    }
+    const displaySize = calculateDisplaySize(canvas);
 
     canvas.style.width = `${displaySize.width}px`;
     canvas.style.height = `${displaySize.height}px`;
-    this.rawWidth = displaySize.width * window.devicePixelRatio;
-    this.rawHeight = displaySize.height * window.devicePixelRatio;
+    this.rawWidth = displaySize.width * globalThis.devicePixelRatio;
+    this.rawHeight = displaySize.height * globalThis.devicePixelRatio;
     canvas.width = this.rawWidth;
     canvas.height = this.rawHeight;
   }

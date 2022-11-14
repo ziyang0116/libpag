@@ -1,9 +1,10 @@
 import { VIDEO_DECODE_WAIT_FRAME, VIDEO_PLAYBACK_RATE_MAX, VIDEO_PLAYBACK_RATE_MIN } from '../constant';
 import { addListener, removeListener, removeAllListeners } from '../utils/video-listener';
-import { IPHONE, IS_WECHAT } from '../utils/ua';
+import { IPHONE, IS_WECHAT, IS_WORKER } from '../utils/ua';
 
 import type { EmscriptenGL } from '../types';
 import type { TimeRange } from '../interfaces';
+import type { WorkerMessage } from '../worker/worker';
 
 const UHD_RESOLUTION = 3840;
 
@@ -37,22 +38,95 @@ const playVideoElement = async (videoElement: HTMLVideoElement) => {
   }
 };
 
+const requestVideoFrameCallback = (videoElement: HTMLVideoElement, frameRate: number, callback: () => void) => {
+  if (videoElement.requestVideoFrameCallback) {
+    videoElement.requestVideoFrameCallback(callback);
+  } else {
+    setTimeout(callback, 1000 / frameRate);
+  }
+};
+
+interface VideoReaderTarget {
+  bitmap: ImageBitmap | null;
+  prepare: (targetFrame: number) => Promise<boolean>;
+  renderToTexture: (GL: EmscriptenGL, textureID: number) => void;
+  onDestroy: () => void;
+}
+
 export class VideoReader {
-  public static isIOS = () => {
+  public static isIOS() {
     return IPHONE;
-  };
+  }
 
-  public static isAndroidMiniprogram = () => {
+  public static isAndroidMiniprogram() {
     return false;
-  };
+  }
 
-  private videoEl: HTMLVideoElement | null;
-  private readonly frameRate: number;
+  public static async create(
+    mp4Data: Uint8Array,
+    width: number,
+    height: number,
+    frameRate: number,
+    staticTimeRanges: TimeRange[],
+  ): Promise<VideoReaderTarget> {
+    if (IS_WORKER) {
+      const proxyId = await new Promise<number>((resolve) => {
+        const buffer = mp4Data.buffer.slice(mp4Data.byteOffset, mp4Data.byteOffset + mp4Data.byteLength);
+        const handle = (event: MessageEvent<WorkerMessage>) => {
+          if (event.data.name === 'VideoReader.constructor') {
+            removeEventListener('message', handle);
+            resolve(event.data.args[0]);
+          }
+        };
+        addEventListener('message', handle);
+        (self as DedicatedWorkerGlobalScope).postMessage(
+          { name: 'VideoReader.constructor', args: [buffer, width, height, frameRate, staticTimeRanges] },
+          [buffer],
+        );
+      });
+      const videoReader = {
+        bitmap: null,
+        prepare: (targetFrame: number) => {
+          return new Promise<boolean>((resolve) => {
+            const handle = (event: MessageEvent<WorkerMessage>) => {
+              if (event.data.name === 'VideoReader.prepare') {
+                removeEventListener('message', handle);
+                videoReader.bitmap = event.data.args[1];
+                resolve(event.data.args[0]);
+              }
+            };
+            addEventListener('message', handle);
+            self.postMessage({ name: 'VideoReader.prepare', args: [proxyId, targetFrame] });
+          });
+        },
+        renderToTexture: (GL: EmscriptenGL, textureID: number) => {
+          if (!videoReader.bitmap) return;
+          const gl = GL.currentContext?.GLctx as WebGLRenderingContext;
+          gl.bindTexture(gl.TEXTURE_2D, GL.textures[textureID]);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, videoReader.bitmap);
+        },
+        onDestroy: () => {
+          self.postMessage({ name: 'VideoReader.onDestroy', args: [proxyId] });
+        },
+      };
+      return videoReader;
+    }
+    return new VideoReader(mp4Data, width, height, frameRate, staticTimeRanges);
+  }
+
+  public bitmap: ImageBitmap | null = null;
+
+  private videoEl: HTMLVideoElement | null = null;
+  private width = 0;
+  private height = 0;
+  private readonly frameRate: number = 0;
   private lastVideoTime = -1;
   private hadPlay = false;
-  private staticTimeRanges: StaticTimeRanges;
+  private staticTimeRanges: StaticTimeRanges | null = null;
   private lastPrepareTime: { frame: number; time: number }[] = [];
   private disablePlaybackRate = false;
+  private bitmapCanvas: OffscreenCanvas | null = null;
+  private bitmapCtx: OffscreenCanvasRenderingContext2D | null = null;
 
   public constructor(
     mp4Data: Uint8Array,
@@ -65,12 +139,13 @@ export class VideoReader {
     this.videoEl.style.display = 'none';
     this.videoEl.muted = true;
     this.videoEl.playsInline = true;
-    this.videoEl.load();
     addListener(this.videoEl, 'timeupdate', this.onTimeupdate.bind(this));
     this.frameRate = frameRate;
     const blob = new Blob([mp4Data], { type: 'video/mp4' });
     this.videoEl.src = URL.createObjectURL(blob);
     this.staticTimeRanges = new StaticTimeRanges(staticTimeRanges);
+    this.width = width;
+    this.height = height;
     if (UHD_RESOLUTION < width || UHD_RESOLUTION < height) {
       this.disablePlaybackRate = true;
     }
@@ -90,26 +165,15 @@ export class VideoReader {
         return true;
       } else {
         // Wait for initialization to complete
-        await playVideoElement(this.videoEl);
-        // Pause video at first frame.
-        await new Promise<void>((resolve) => {
-          window.requestAnimationFrame(() => {
-            if (!this.videoEl) {
-              console.error('Video Element is null!');
-            } else {
-              this.videoEl.pause();
-              this.hadPlay = true;
-            }
-            resolve();
-          });
-        });
+        await this.nextFrame();
+        this.hadPlay = true;
         return true;
       }
     } else {
       if (Math.round(targetTime * this.frameRate) === Math.round(currentTime * this.frameRate)) {
         // Current frame
         return true;
-      } else if (this.staticTimeRanges.contains(targetFrame)) {
+      } else if (this.staticTimeRanges?.contains(targetFrame)) {
         // Static frame
         return await this.seek(targetTime, false);
       } else if (Math.abs(currentTime - targetTime) < (1 / this.frameRate) * VIDEO_DECODE_WAIT_FRAME) {
@@ -132,14 +196,30 @@ export class VideoReader {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.videoEl);
   }
 
+  // Only work in web worker version
+  public async generateBitmap() {
+    // Batter than createImageBitmap from video element in benchmark
+    if (!this.bitmapCanvas) {
+      this.bitmapCanvas = new OffscreenCanvas(this.width, this.height);
+      this.bitmapCanvas!.width = this.width;
+      this.bitmapCanvas!.height = this.height;
+      this.bitmapCtx = this.bitmapCanvas.getContext('2d');
+    }
+    this.bitmapCtx?.fillRect(0, 0, this.width, this.height);
+    this.bitmapCtx?.drawImage(this.videoEl as HTMLVideoElement, 0, 0, this.width, this.height);
+    this.bitmap = await createImageBitmap(this.bitmapCanvas);
+    return this.bitmap;
+  }
+
   public onDestroy() {
     if (!this.videoEl) {
       throw new Error('Video element is null!');
     }
-
     removeAllListeners(this.videoEl, 'playing');
     removeAllListeners(this.videoEl, 'timeupdate');
     this.videoEl = null;
+    this.bitmapCanvas = null;
+    this.bitmapCtx = null;
   }
 
   private onTimeupdate() {
@@ -221,6 +301,21 @@ export class VideoReader {
     let playbackRate = 1000 / this.frameRate / distance;
     playbackRate = Math.min(Math.max(playbackRate, VIDEO_PLAYBACK_RATE_MIN), VIDEO_PLAYBACK_RATE_MAX);
     this.videoEl!.playbackRate = playbackRate;
+  }
+
+  private nextFrame() {
+    return new Promise<boolean>((resolve) => {
+      if (!this.videoEl) {
+        resolve(false);
+        return;
+      }
+      playVideoElement(this.videoEl).then(() => {
+        requestVideoFrameCallback(this.videoEl as HTMLVideoElement, this.frameRate, () => {
+          this.videoEl?.pause();
+          resolve(true);
+        });
+      });
+    });
   }
 }
 

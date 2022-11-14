@@ -9,4 +9,8 @@ module.exports = {
   parserOptions: {
     lib: ['dom', 'ES5', 'ES6', 'DOM.Iterable'],
   },
+  globals: {
+    globalThis: true,
+    DedicatedWorkerGlobalScope: false,
+  },
 };
