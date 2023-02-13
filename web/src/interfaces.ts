@@ -76,7 +76,7 @@ export interface NativeImage {
 }
 
 export interface NativeImageConstructor {
-  createFromBytes: (bytes: ArrayBuffer) => Promise<NativeImage | null>;
+  createFromBytes: (bytes: ArrayBuffer, width: number, height: number) => Promise<NativeImage | null>;
   createFromPath: (path: string) => Promise<NativeImage | null>;
   new (source: TexImageSource): NativeImage;
 }

@@ -2,10 +2,12 @@ import { EmscriptenGL } from '../types';
 import { releaseCanvas2D } from '../utils/canvas';
 
 export class NativeImage {
-  public static async createFromBytes(bytes: ArrayBuffer) {
+  public static async createFromBytes(bytes: ArrayBuffer, width: number, height: number) {
     const blob = new Blob([bytes], { type: 'image/*' });
     return new Promise<NativeImage | null>((resolve) => {
       const image = new Image();
+      image.width = width;
+      image.height = height;
       image.onload = function () {
         resolve(new NativeImage(image));
       };
@@ -29,6 +31,14 @@ export class NativeImage {
       };
       image.src = path;
     });
+  }
+
+  public static isSupportWebp() {
+    try {
+      return document.createElement('canvas').toDataURL('image/webp', 0.5).indexOf('data:image/webp') === 0;
+    } catch (err) {
+      return false;
+    }
   }
 
   protected source: TexImageSource | OffscreenCanvas;
