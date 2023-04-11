@@ -1,14 +1,25 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//  ViewController.m
-//  PAGViewer
+//  Tencent is pleased to support the open source community by making libpag available.
 //
-//  Created by dom on 25/09/2017.
-//  Copyright © 2017 idom.me. All rights reserved.
+//  Copyright (C) 2021 THL A29 Limited, a Tencent company. All rights reserved.
 //
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+//  except in compliance with the License. You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  unless required by applicable law or agreed to in writing, software distributed under the
+//  license is distributed on an "as is" basis, without warranties or conditions of any kind,
+//  either express or implied. see the license for the specific language governing permissions
+//  and limitations under the license.
+//
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 #import "ViewController.h"
-#import "PAGPlayerView.h"
 #import "BackgroundView.h"
+#import "PAGImgeViewController.h"
+#import "PAGViewController.h"
 #import <libpag/PAGVideoDecoder.h>
 
 @interface ViewController () <UITabBarControllerDelegate>
@@ -28,52 +39,46 @@
     [self loadTabBar];
 }
 
+
+- (CGFloat)getSafeDistanceBottom {
+    if (@available(iOS 13.0, *)) {
+        NSSet *set = [UIApplication sharedApplication].connectedScenes;
+        UIWindowScene *windowScene = [set anyObject];
+        UIWindow *window = windowScene.windows.firstObject;
+        return window.safeAreaInsets.bottom;
+    } else if (@available(iOS 11.0, *)) {
+        UIWindow *window = [UIApplication sharedApplication].windows.firstObject;
+        return window.safeAreaInsets.bottom;
+    }
+    return 0;
+}
+
+
 - (void)loadTabBar {
     _tabBarController = [[UITabBarController alloc] init];
     _tabBarController.delegate = self;
     
-    CGRect screenBounds = [[UIScreen mainScreen] bounds];
-    
-    UIViewController *vc1 = [[UIViewController alloc] init];
+    PAGViewController* vc1 = [[PAGViewController alloc] init];
     UITabBarItem *item1 = [[UITabBarItem alloc] init];
-    item1.title = @"alpha.pag";
+    NSString* path = [[NSBundle mainBundle] pathForResource:@"alpha" ofType:@"pag"];
+    [vc1 setPath:path];
+    item1.title = @"PAGView";
     [item1 setTitleTextAttributes:@{NSFontAttributeName:[UIFont systemFontOfSize:30]} forState:UIControlStateNormal];
     vc1.tabBarItem = item1;
     
-    PAGPlayerView *uiView1 = [[PAGPlayerView alloc] initWithFrame:screenBounds];
-    uiView1.userInteractionEnabled = TRUE;
-    
-    [vc1.view addSubview:uiView1];
-    
-    UIViewController *vc2 = [[UIViewController alloc] init];
+    PAGImgeViewController* vc2 = [[PAGImgeViewController alloc] init];
     UITabBarItem *item2 = [[UITabBarItem alloc] init];
-    item2.title = @"particle_video.pag";
-    item2.image = [UIImage imageNamed:@"ffmpeg"];
+    item2.title = @"PAGImageView";
     [item2 setTitleTextAttributes:@{NSFontAttributeName:[UIFont systemFontOfSize:30]} forState:UIControlStateNormal];
     vc2.tabBarItem = item2;
     
-    PAGPlayerView *uiView2 = [[PAGPlayerView alloc] initWithFrame:screenBounds];
-    uiView2.userInteractionEnabled = TRUE;
-    
-    [vc2.view addSubview:uiView2];
-    
     _tabBarController.viewControllers = [NSArray arrayWithObjects:vc1, vc2, nil];
+    _tabBarController.view.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height - [self getSafeDistanceBottom]);
     
     [self.view addSubview:_tabBarController.view];
-    NSString* pagPath = _tabBarController.selectedViewController.tabBarItem.title;
-    [uiView1 loadPAGAndPlay: pagPath];
 }
 
 - (BOOL)tabBarController:(UITabBarController *)tabBarController shouldSelectViewController:(UIViewController *)viewController {
-    PAGPlayerView *oldView = (PAGPlayerView *)tabBarController.selectedViewController.view.subviews.firstObject;
-    [oldView stop];
-
-    NSUInteger selectedIndex = [_tabBarController selectedIndex]==0?1:0;
-    [PAGVideoDecoder SetMaxHardwareDecoderCount:(selectedIndex == 0 ? 15 : 0)];
-    UIViewController *controller = [_tabBarController.viewControllers objectAtIndex:selectedIndex];
-    NSString* pagPath = controller.tabBarItem.title;
-    PAGPlayerView *newView = (PAGPlayerView *)viewController.view.subviews.firstObject;
-    [newView loadPAGAndPlay: pagPath];
     return YES;
 }
 
