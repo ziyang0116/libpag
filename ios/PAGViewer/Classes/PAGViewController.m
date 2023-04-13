@@ -54,7 +54,7 @@
     }
 
     if ([pagFile numImages] > 0) {
-        NSString* filePath = [[NSBundle mainBundle] pathForResource:@"rotation" ofType:@"jpg"];
+        NSString* filePath = [[NSBundle mainBundle] pathForResource:@"mountain" ofType:@"jpg"];
         PAGImage* pagImage = [PAGImage FromPath:filePath];
         if (pagImage) {
             [pagFile replaceImage:0 data:pagImage];

@@ -28,6 +28,9 @@
 @property (weak, nonatomic) IBOutlet BackgroundView *bgView;
 @property (nonatomic, strong) UITabBarController *tabBarController;
 
+@property (nonatomic, strong) UIButton *firstButton;
+@property (nonatomic, strong) UIButton *secondButton;
+
 @end
 
 @implementation ViewController
@@ -36,9 +39,17 @@
     [super viewDidLoad];
     self.view.tintColor = [UIColor colorWithRed:0.00 green:0.35 blue:0.85 alpha:1.00];
     
-    [self loadTabBar];
+    CGFloat safeDistanceBottom = [self getSafeDistanceBottom];
+    self.firstButton = [[UIButton alloc] init];
+    self.firstButton.frame = CGRectMake(0, self.view.bounds.size.height - safeDistanceBottom, self.view.bounds.size.height / 2 , 40);
+    self.firstButton.
+    
+    self.secondButton = [[UIButton alloc] init];
+    
+    
+    
+//    [self loadTabBar];
 }
-
 
 - (CGFloat)getSafeDistanceBottom {
     if (@available(iOS 13.0, *)) {
