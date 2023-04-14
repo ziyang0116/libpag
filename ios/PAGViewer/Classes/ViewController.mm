@@ -18,18 +18,18 @@
 
 #import "ViewController.h"
 #import "BackgroundView.h"
-#import "PAGImgeViewController.h"
-#import "PAGViewController.h"
-#import <libpag/PAGVideoDecoder.h>
+#import <libpag/PAGView.h>
+#import <libpag/PAGImageView.h>
 
-@interface ViewController () <UITabBarControllerDelegate>
-@property (nonatomic, strong) UIImageView *imageView;
-@property (nonatomic, strong) UILabel *label;
+#define SCREEN_WIDTH       [UIScreen mainScreen].bounds.size.width
+#define SCREEN_HEIGHT      [UIScreen mainScreen].bounds.size.height
+
+@interface ViewController ()
 @property (weak, nonatomic) IBOutlet BackgroundView *bgView;
-@property (nonatomic, strong) UITabBarController *tabBarController;
-
 @property (nonatomic, strong) UIButton *firstButton;
 @property (nonatomic, strong) UIButton *secondButton;
+@property (nonatomic, strong) PAGView *pagView;
+@property (nonatomic, strong) UIView *pagImageViewGroup;
 
 @end
 
@@ -40,15 +40,80 @@
     self.view.tintColor = [UIColor colorWithRed:0.00 green:0.35 blue:0.85 alpha:1.00];
     
     CGFloat safeDistanceBottom = [self getSafeDistanceBottom];
+    CGFloat buttonHeight = 40;
     self.firstButton = [[UIButton alloc] init];
-    self.firstButton.frame = CGRectMake(0, self.view.bounds.size.height - safeDistanceBottom, self.view.bounds.size.height / 2 , 40);
-    self.firstButton.
+    self.firstButton.frame = CGRectMake(0, SCREEN_HEIGHT- safeDistanceBottom - buttonHeight, SCREEN_WIDTH / 2 , buttonHeight);
+    [self.firstButton setTitle:@"PAGView" forState:UIControlStateNormal];
+    self.firstButton.layer.cornerRadius = 20;
+    self.firstButton.layer.masksToBounds = YES;
+    [self.firstButton setBackgroundColor:[UIColor colorWithRed:0 green:90.0/255 blue:217.0/255 alpha:1.0]];
+    [self.firstButton addTarget:self action:@selector(firstButtonClicked) forControlEvents:UIControlEventTouchUpInside];
+    [self.firstButton setUserInteractionEnabled:YES];
+    [self.view addSubview:self.firstButton];
     
     self.secondButton = [[UIButton alloc] init];
+    self.secondButton.frame = CGRectMake(SCREEN_WIDTH / 2, SCREEN_HEIGHT- safeDistanceBottom - buttonHeight, SCREEN_WIDTH / 2 , buttonHeight);
+    [self.secondButton setTitle:@"PAGImageView" forState:UIControlStateNormal];
+    self.secondButton.layer.cornerRadius = 20;
+    self.secondButton.layer.masksToBounds = YES;
+    [self.secondButton setBackgroundColor:[UIColor grayColor]];
+    [self.secondButton setUserInteractionEnabled:YES];
+    [self.view addSubview:self.secondButton];
+    [self.secondButton addTarget:self action:@selector(secondButtonClicked) forControlEvents:UIControlEventTouchUpInside];
     
-    
-    
-//    [self loadTabBar];
+    [self addPAGViewAndPlay];
+}
+
+- (void)addPAGViewAndPlay {
+    if (self.pagView == nil) {
+        NSString* path = [[NSBundle mainBundle] pathForResource:@"alpha" ofType:@"pag"];
+        PAGFile* pagFile = [PAGFile Load:path];
+        if ([pagFile numTexts] > 0) {
+            PAGText* textData = [pagFile getTextData:0];
+            textData.text = @"hah哈 哈哈哈哈👌하";
+            [pagFile replaceText:0 data:textData];
+        }
+
+        if ([pagFile numImages] > 0) {
+            NSString* filePath = [[NSBundle mainBundle] pathForResource:@"mountain" ofType:@"jpg"];
+            PAGImage* pagImage = [PAGImage FromPath:filePath];
+            if (pagImage) {
+                [pagFile replaceImage:0 data:pagImage];
+            }
+        }
+        self.pagView = [[PAGView alloc] init];
+        [self.view addSubview:self.pagView];
+        [self bringButtonsToFront];
+        
+        self.pagView.frame = self.view.frame;
+        [self.pagView setComposition:pagFile];
+        [self.pagView setRepeatCount:-1];
+        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(pagViewClicked)];
+        [self.pagView addGestureRecognizer:tap];
+
+        [self.pagView play];
+    }
+}
+
+- (void)addPAGImageViewsAndPlay {
+    if (self.pagImageViewGroup == nil) {
+        self.pagImageViewGroup  = [[UIView alloc] init];
+        self.pagImageViewGroup .frame = self.view.frame;
+        [self.view addSubview:self.pagImageViewGroup ];
+        float startY = 100;
+        float itemWidth = SCREEN_WIDTH / 4;
+        float itemHeight = itemWidth;
+        for (int i = 0; i < 20; i++) {
+            PAGImageView* pagImageView = [[PAGImageView alloc] initWithFrame:CGRectMake(itemWidth * (i % 4), (i / 4) * itemHeight + startY, itemWidth, itemHeight)];
+            [pagImageView setPath:[[NSBundle mainBundle] pathForResource:[NSString stringWithFormat:@"%d", i] ofType:@"pag"]];
+            [pagImageView setCacheAllFramesInMemory:NO];
+            [self.pagImageViewGroup addSubview:pagImageView];
+            [pagImageView setRepeatCount:-1];
+            [pagImageView play];
+        }
+        [self.view addSubview:self.pagImageViewGroup];
+        [self bringButtonsToFront];
+    }
 }
 
 - (CGFloat)getSafeDistanceBottom {
@@ -64,33 +129,41 @@
     return 0;
 }
 
-
-- (void)loadTabBar {
-    _tabBarController = [[UITabBarController alloc] init];
-    _tabBarController.delegate = self;
-    
-    PAGViewController* vc1 = [[PAGViewController alloc] init];
-    UITabBarItem *item1 = [[UITabBarItem alloc] init];
-    NSString* path = [[NSBundle mainBundle] pathForResource:@"alpha" ofType:@"pag"];
-    [vc1 setPath:path];
-    item1.title = @"PAGView";
-    [item1 setTitleTextAttributes:@{NSFontAttributeName:[UIFont systemFontOfSize:30]} forState:UIControlStateNormal];
-    vc1.tabBarItem = item1;
-    
-    PAGImgeViewController* vc2 = [[PAGImgeViewController alloc] init];
-    UITabBarItem *item2 = [[UITabBarItem alloc] init];
-    item2.title = @"PAGImageView";
-    [item2 setTitleTextAttributes:@{NSFontAttributeName:[UIFont systemFontOfSize:30]} forState:UIControlStateNormal];
-    vc2.tabBarItem = item2;
-    
-    _tabBarController.viewControllers = [NSArray arrayWithObjects:vc1, vc2, nil];
-    _tabBarController.view.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height - [self getSafeDistanceBottom]);
-    
-    [self.view addSubview:_tabBarController.view];
+- (void)pagViewClicked{
+    if (self.pagView.isPlaying) {
+        [self.pagView stop];
+    } else {
+        [self.pagView play];
+    }
 }
 
-- (BOOL)tabBarController:(UITabBarController *)tabBarController shouldSelectViewController:(UIViewController *)viewController {
-    return YES;
+- (void)firstButtonClicked {
+    if (self.pagImageViewGroup && !self.pagImageViewGroup.isHidden) {
+        [self.pagImageViewGroup setHidden:YES];
+        [self.secondButton setBackgroundColor:[UIColor grayColor]];
+    }
+    if (self.pagView && self.pagView.isHidden) {
+        [self.pagView setHidden:NO];
+        [self.firstButton setBackgroundColor:[UIColor colorWithRed:0 green:90.0/255 blue:217.0/255 alpha:1.0]];
+    }
+}
+
+- (void)secondButtonClicked{
+    if (self.pagView && !self.pagView.isHidden) {
+        [self.pagView setHidden:YES];
+        [self.firstButton setBackgroundColor:[UIColor grayColor]];
+    }
+    if (self.pagImageViewGroup == nil) {
+        [self addPAGImageViewsAndPlay];
+    } else if (self.pagImageViewGroup.isHidden) {
+        [self.pagImageViewGroup setHidden:NO];
+    }
+    [self.secondButton setBackgroundColor:[UIColor colorWithRed:0 green:90.0/255 blue:217.0/255 alpha:1.0]];
+}
+
+- (void)bringButtonsToFront {
+    [self.view bringSubviewToFront:self.firstButton];
+    [self.view bringSubviewToFront:self.secondButton];
 }
 
 - (void)viewDidAppear:(BOOL)animated {

@@ -20,6 +20,4 @@
 
 @interface ViewController : UIViewController
 
-@property (nonatomic) NSInteger type;
-
 @end

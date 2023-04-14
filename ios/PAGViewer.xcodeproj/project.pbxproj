@@ -13,8 +13,6 @@
 		4D72AC7A22C1071600C60D04 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F2ED88AC1FCBEDF100555707 /* LaunchScreen.storyboard */; };
 		4D72AC7F22C1071600C60D04 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F2ED88AA1FCBEDF100555707 /* Assets.xcassets */; };
 		4D72AC8122C1071600C60D04 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F2ED88A71FCBEDF100555707 /* Main.storyboard */; };
-		4DA13E8229E5451200F85AC6 /* PAGImgeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DA13E8129E5451200F85AC6 /* PAGImgeViewController.m */; };
-		4DA13E8A29E550C400F85AC6 /* PAGViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DA13E8929E550C400F85AC6 /* PAGViewController.m */; };
 		4DA13E9F29E5564100F85AC6 /* 2.pag in Resources */ = {isa = PBXBuildFile; fileRef = 4DA13E8B29E5564000F85AC6 /* 2.pag */; };
 		4DA13EA029E5564100F85AC6 /* 10.pag in Resources */ = {isa = PBXBuildFile; fileRef = 4DA13E8C29E5564000F85AC6 /* 10.pag */; };
 		4DA13EA129E5564100F85AC6 /* 11.pag in Resources */ = {isa = PBXBuildFile; fileRef = 4DA13E8D29E5564000F85AC6 /* 11.pag */; };
@@ -119,10 +117,6 @@
 		382C49D8F87E5B9D940647B3 /* Pods-PAGViewerSlim.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PAGViewerSlim.release.xcconfig"; path = "Pods/Target Support Files/Pods-PAGViewerSlim/Pods-PAGViewerSlim.release.xcconfig"; sourceTree = "<group>"; };
 		4D3B24C424051D4C0044EA7D /* libbz2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.tbd; path = usr/lib/libbz2.tbd; sourceTree = SDKROOT; };
 		4D72AC9B22C1071600C60D04 /* PAGViewerTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PAGViewerTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		4DA13E8029E5451200F85AC6 /* PAGImgeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PAGImgeViewController.h; sourceTree = "<group>"; };
-		4DA13E8129E5451200F85AC6 /* PAGImgeViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PAGImgeViewController.m; sourceTree = "<group>"; };
-		4DA13E8829E550C400F85AC6 /* PAGViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PAGViewController.h; sourceTree = "<group>"; };
-		4DA13E8929E550C400F85AC6 /* PAGViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PAGViewController.m; sourceTree = "<group>"; };
 		4DA13E8B29E5564000F85AC6 /* 2.pag */ = {isa = PBXFileReference; lastKnownFileType = file; name = 2.pag; path = ../../assets/2.pag; sourceTree = "<group>"; };
 		4DA13E8C29E5564000F85AC6 /* 10.pag */ = {isa = PBXFileReference; lastKnownFileType = file; name = 10.pag; path = ../../assets/10.pag; sourceTree = "<group>"; };
 		4DA13E8D29E5564000F85AC6 /* 11.pag */ = {isa = PBXFileReference; lastKnownFileType = file; name = 11.pag; path = ../../assets/11.pag; sourceTree = "<group>"; };
@@ -388,10 +382,6 @@
 				4DE99A4827BFC16F0003AA0A /* BackgroundView.m */,
 				4DE99A4A27BFC16F0003AA0A /* ViewController.h */,
 				4DE99A4C27BFC16F0003AA0A /* ViewController.mm */,
-				4DA13E8029E5451200F85AC6 /* PAGImgeViewController.h */,
-				4DA13E8129E5451200F85AC6 /* PAGImgeViewController.m */,
-				4DA13E8829E550C400F85AC6 /* PAGViewController.h */,
-				4DA13E8929E550C400F85AC6 /* PAGViewController.m */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -744,8 +734,6 @@
 			files = (
 				F2ED88B11FCBEDF100555707 /* main.mm in Sources */,
 				F2ED88A31FCBEDF100555707 /* AppDelegate.mm in Sources */,
-				4DA13E8229E5451200F85AC6 /* PAGImgeViewController.m in Sources */,
-				4DA13E8A29E550C400F85AC6 /* PAGViewController.m in Sources */,
 				4DE99A5227BFC16F0003AA0A /* ViewController.mm in Sources */,
 				4DE99A4E27BFC16F0003AA0A /* BackgroundView.m in Sources */,
 			);
