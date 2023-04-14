@@ -33,7 +33,6 @@
 		4DA13EB029E5564100F85AC6 /* 7.pag in Resources */ = {isa = PBXBuildFile; fileRef = 4DA13E9C29E5564100F85AC6 /* 7.pag */; };
 		4DA13EB129E5564100F85AC6 /* 5.pag in Resources */ = {isa = PBXBuildFile; fileRef = 4DA13E9D29E5564100F85AC6 /* 5.pag */; };
 		4DA13EB229E5564100F85AC6 /* 6.pag in Resources */ = {isa = PBXBuildFile; fileRef = 4DA13E9E29E5564100F85AC6 /* 6.pag */; };
-		4DA13EBA29E7AE3700F85AC6 /* video.pag in Resources */ = {isa = PBXBuildFile; fileRef = 4DA13EB929E7AE3700F85AC6 /* video.pag */; };
 		4DE99A4E27BFC16F0003AA0A /* BackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DE99A4827BFC16F0003AA0A /* BackgroundView.m */; };
 		4DE99A4F27BFC16F0003AA0A /* BackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DE99A4827BFC16F0003AA0A /* BackgroundView.m */; };
 		4DE99A5227BFC16F0003AA0A /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4DE99A4C27BFC16F0003AA0A /* ViewController.mm */; };
@@ -137,7 +136,6 @@
 		4DA13E9C29E5564100F85AC6 /* 7.pag */ = {isa = PBXFileReference; lastKnownFileType = file; name = 7.pag; path = ../../assets/7.pag; sourceTree = "<group>"; };
 		4DA13E9D29E5564100F85AC6 /* 5.pag */ = {isa = PBXFileReference; lastKnownFileType = file; name = 5.pag; path = ../../assets/5.pag; sourceTree = "<group>"; };
 		4DA13E9E29E5564100F85AC6 /* 6.pag */ = {isa = PBXFileReference; lastKnownFileType = file; name = 6.pag; path = ../../assets/6.pag; sourceTree = "<group>"; };
-		4DA13EB929E7AE3700F85AC6 /* video.pag */ = {isa = PBXFileReference; lastKnownFileType = file; path = video.pag; sourceTree = "<group>"; };
 		4DA8173F2411FA1000C4FBB3 /* libavutil.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavutil.a; path = PAGViewer/FFmpeg/lib/libavutil.a; sourceTree = "<group>"; };
 		4DA817402411FA1000C4FBB3 /* libavcodec.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavcodec.a; path = PAGViewer/FFmpeg/lib/libavcodec.a; sourceTree = "<group>"; };
 		4DA817412411FA1000C4FBB3 /* libavdevice.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavdevice.a; path = PAGViewer/FFmpeg/lib/libavdevice.a; sourceTree = "<group>"; };
@@ -284,7 +282,6 @@
 		4DC5D301239FD95D007DFA8C /* assets */ = {
 			isa = PBXGroup;
 			children = (
-				4DA13EB929E7AE3700F85AC6 /* video.pag */,
 				4DA13E9429E5564000F85AC6 /* 0.pag */,
 				4DA13E9529E5564000F85AC6 /* 1.pag */,
 				4DA13E8B29E5564000F85AC6 /* 2.pag */,
@@ -578,7 +575,6 @@
 				F2ED88A91FCBEDF100555707 /* Main.storyboard in Resources */,
 				545B97FF278F115400A0112E /* repeater.pag in Resources */,
 				4DA13EAF29E5564100F85AC6 /* 19.pag in Resources */,
-				4DA13EBA29E7AE3700F85AC6 /* video.pag in Resources */,
 				545B9867278F115400A0112E /* TextPositionAnimator.pag in Resources */,
 				4DA13EAD29E5564100F85AC6 /* 15.pag in Resources */,
 				545B982D278F115400A0112E /* RootLayerBitmapFreeze.pag in Resources */,
