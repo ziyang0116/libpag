@@ -97,8 +97,8 @@
 
 - (void)addPAGImageViewsAndPlay {
     if (self.pagImageViewGroup == nil) {
-        self.pagImageViewGroup  = [[UIView alloc] init];
-        self.pagImageViewGroup .frame = self.view.frame;
+        self.pagImageViewGroup = [[UIView alloc] init];
+        self.pagImageViewGroup.frame = self.view.frame;
         [self.view addSubview:self.pagImageViewGroup ];
         float startY = 100;
         float itemWidth = SCREEN_WIDTH / 4;
@@ -164,10 +164,6 @@
 - (void)bringButtonsToFront {
     [self.view bringSubviewToFront:self.firstButton];
     [self.view bringSubviewToFront:self.secondButton];
-}
-
-- (void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
 }
 
 @end
