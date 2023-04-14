@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_main);
+
         containerView = (RelativeLayout) findViewById(R.id.container_view);
         BackgroundView backgroundView = new BackgroundView(this);
         backgroundView.setLayoutParams(new RelativeLayout.LayoutParams(
@@ -67,8 +68,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btPlaySecond.setOnClickListener(this);
 
         addPAGView();
-        
-        activatedView(btPlayFirst.getId());
         if (pagView != null) {
             pagView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -82,6 +81,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             });
             pagView.play();
         }
+
+        activatedView(btPlayFirst.getId());
     }
 
     private void addPAGView() {
@@ -90,7 +91,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             pagView = new PAGView(this, eglContext);
             pagView.setLayoutParams(new RelativeLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            pagView.setRepeatCount(-1);
 
             PAGFile pagFile = PAGFile.Load(getAssets(), "alpha.pag");
             if (pagFile.numTexts() > 0) {
@@ -105,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 pagFile.replaceImage(0, pagImage);
             }
             pagView.setComposition(pagFile);
+            pagView.setRepeatCount(-1);
             containerView.addView(pagView);
         }
     }
@@ -157,17 +158,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void activatedView(int viewId) {
-        switch (viewId) {
-            case R.id.play_first:
-                btPlayFirst.setActivated(true);
-                btPlaySecond.setActivated(false);
-                break;
-            case R.id.play_second:
-                btPlayFirst.setActivated(false);
-                btPlaySecond.setActivated(true);
-                break;
-            default:
-                break;
+        if (viewId == R.id.play_first) {
+            btPlayFirst.setActivated(true);
+            btPlaySecond.setActivated(false);
+        } else if (viewId == R.id.play_second) {
+            btPlayFirst.setActivated(false);
+            btPlaySecond.setActivated(true);
         }
     }
 
@@ -177,13 +173,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (pagView.getVisibility() == View.VISIBLE) {
                 pagView.setVisibility(View.INVISIBLE);
             }
-           pagView.setVisibility(View.INVISIBLE);
            if (pagImageViewGroup == null) {
                addPAGImageViewsAndPlay();
            } else if (pagImageViewGroup.getVisibility() == View.INVISIBLE) {
                pagImageViewGroup.setVisibility(View.VISIBLE);
            }
-            activatedView(R.id.play_second);
+           activatedView(R.id.play_second);
         } else {
             if (pagImageViewGroup != null && (pagImageViewGroup.getVisibility() == View.VISIBLE)) {
                 pagImageViewGroup.setVisibility(View.INVISIBLE);
@@ -194,7 +189,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             activatedView(R.id.play_first);
         }
     }
-
 
     private void eglSetup() {
         eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
