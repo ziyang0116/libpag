@@ -24,6 +24,7 @@
 #include <string>
 #include <unordered_map>
 #include "codec/NALUType.h"
+#include "rendering/BitmapBuffer.h"
 #include "rendering/utils/shaper/PositionedGlyphs.h"
 #include "rendering/video/VideoDecoderFactory.h"
 #include "tgfx/core/Data.h"
@@ -66,6 +67,12 @@ class Platform {
    */
   virtual void traceImage(const tgfx::ImageInfo& info, const void* pixels,
                           const std::string& tag) const;
+
+  /**
+   * Creates a platform-specific bitmap with the given width and height. Returns nullptr if the
+   * current platform has no custom implementation.
+   */
+  virtual std::shared_ptr<BitmapBuffer> makeBitmap(int width, int height) const;
 
   /**
    * Returns the absolute path to the platform-specific cache directory on the filesystem.

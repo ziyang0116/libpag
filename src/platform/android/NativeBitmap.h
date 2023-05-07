@@ -2,7 +2,7 @@
 //
 //  Tencent is pleased to support the open source community by making libpag available.
 //
-//  Copyright (C) 2021 THL A29 Limited, a Tencent company. All rights reserved.
+//  Copyright (C) 2023 THL A29 Limited, a Tencent company. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 //  except in compliance with the License. You may obtain a copy of the License at
@@ -16,31 +16,41 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "Platform.h"
-#include "rendering/video/VideoDecoder.h"
+#pragma once
+
+#include "JNIHelper.h"
+#include "rendering/BitmapBuffer.h"
 
 namespace pag {
-std::vector<const VideoDecoderFactory*> Platform::getVideoDecoderFactories() const {
-  return {VideoDecoderFactory::ExternalDecoderFactory(),
-          VideoDecoderFactory::SoftwareAVCDecoderFactory()};
-}
+class NativeBitmap : public BitmapBuffer {
+ public:
+  static void InitJNI(JNIEnv* env);
 
-bool Platform::registerFallbackFonts() const {
-  return false;
-}
+  static std::shared_ptr<NativeBitmap> Make(int width, int height);
 
-NALUType Platform::naluType() const {
-  return NALUType::AnnexB;
-}
+  ~NativeBitmap() override;
 
-void Platform::traceImage(const tgfx::ImageInfo&, const void*, const std::string&) const {
-}
+  const tgfx::ImageInfo& info() const override {
+    return _info;
+  }
 
-std::shared_ptr<BitmapBuffer> Platform::makeBitmap(int, int) const {
-  return nullptr;
-}
+  tgfx::HardwareBufferRef getHardwareBuffer() const override {
+    return hardwareBuffer;
+  }
 
-std::string Platform::getCacheDir() const {
-  return "";
-}
+  tgfx::NativeImageRef makeNativeImage() override;
+
+  void* lockPixels() override;
+
+  void unlockPixels() override;
+
+ private:
+  std::mutex locker = {};
+  tgfx::ImageInfo _info = {};
+  tgfx::HardwareBufferRef hardwareBuffer = nullptr;
+  Global<jobject> bitmap = {};
+
+  explicit NativeBitmap(const tgfx::ImageInfo& info) : _info(info) {
+  }
+};
 }  // namespace pag

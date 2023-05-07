@@ -24,6 +24,7 @@
 #include "HardwareDecoder.h"
 #include "JPAGDiskCache.h"
 #include "JTraceImage.h"
+#include "NativeBitmap.h"
 #include "PAGText.h"
 
 #define LOG_TAG "libpag"
@@ -69,6 +70,7 @@ void NativePlatform::InitJNI() {
   HardwareDecoder::InitJNI(env);
   InitPAGTextJNI(env);
   JPAGDiskCache::InitJNI(env);
+  NativeBitmap::InitJNI(env);
   env->ExceptionClear();
 }
 
@@ -84,6 +86,10 @@ bool NativePlatform::registerFallbackFonts() const {
 void NativePlatform::traceImage(const tgfx::ImageInfo& info, const void* pixels,
                                 const std::string& tag) const {
   JTraceImage::Trace(info, pixels, tag);
+}
+
+std::shared_ptr<BitmapBuffer> NativePlatform::makeBitmap(int width, int height) const {
+  return NativeBitmap::Make(width, height);
 }
 
 std::string NativePlatform::getCacheDir() const {

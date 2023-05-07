@@ -75,7 +75,7 @@ class PAGLayer;
 class PAG_API PAGImage {
  public:
   /**
-   * Creates a PAGImage object from a path of a image file, return null if the file does not exist
+   * Creates a PAGImage object from a path of an image file, return null if the file does not exist,
    * or it's not a valid image file.
    */
   static std::shared_ptr<PAGImage> FromPath(const std::string& filePath);
@@ -140,7 +140,7 @@ class PAG_API PAGImage {
   void setScaleMode(int mode);
 
   /**
-   * Returns a copy of current matrix.
+   * Returns a copy of the current matrix.
    */
   Matrix matrix() const;
 
@@ -1171,7 +1171,7 @@ class GLRestorer;
 class PAG_API PAGSurface {
  public:
   /**
-   *  Creates a new PAGSurface from specified GPUDrawable, Returns nullptr if drawable is nullptr.
+   *  Creates a new PAGSurface from specified Drawable, Returns nullptr if drawable is nullptr.
    */
   static std::shared_ptr<PAGSurface> MakeFrom(std::shared_ptr<Drawable> drawable);
 
@@ -1534,6 +1534,49 @@ class PAG_API PAGPlayer {
   friend class PAGSurface;
 };
 
+/**
+ * PAGBitmap describes a two-dimensional pixel array located in the CPU.
+ */
+class PAG_API PAGBitmap {
+ public:
+  virtual ~PAGBitmap() = default;
+
+  /**
+   * Returns the width of the bitmap.
+   */
+  virtual int width() const = 0;
+
+  /**
+   * Returns the height of the bitmap.
+   */
+  virtual int height() const = 0;
+
+  /**
+   * Returns the ColorType of the bitmap.
+   */
+  virtual ColorType colorType() const = 0;
+
+  /**
+   * Returns the AlphaType of the bitmap.
+   */
+  virtual AlphaType alphaType() const = 0;
+
+  /**
+   * Returns the rowBytes of the bitmap.
+   */
+  virtual size_t rowBytes() const = 0;
+
+  /**
+   * Locks and returns the writable pixels, the base address corresponding to the bitmap origin.
+   */
+  virtual void* lockPixels() = 0;
+
+  /**
+   * Call this to balance a successful call to lockPixels().
+   */
+  virtual void unlockPixels() = 0;
+};
+
 class SequenceFile;
 class CompositionReader;
 
@@ -1543,7 +1586,7 @@ class CompositionReader;
  * depending on the complexity of the PAG files. You can use the PAGDiskCache::SetMaxDiskSize()
  * method to manage the cache limit of the disk usage.
  */
-class PAGDecoder {
+class PAG_API PAGDecoder {
  public:
   /**
    * Creates a PAGDecoder with a PAGComposition, a frame rate limit, and a scale factor for the
@@ -1645,7 +1688,7 @@ class PAGDecoder {
 /**
  * Defines methods to manage the disk cache capabilities.
  */
-class PAGDiskCache {
+class PAG_API PAGDiskCache {
  public:
   /**
    * Returns the size limit of the disk cache in bytes. The default value is 1 GB.

@@ -32,6 +32,8 @@ class CocoaPlatform : public Platform {
   void traceImage(const tgfx::ImageInfo& info, const void* pixels,
                   const std::string& tag) const override;
 
+  std::shared_ptr<BitmapBuffer> makeBitmap(int width, int height) const override;
+
   std::optional<PositionedGlyphs> shapeText(
       const std::string& text, const std::shared_ptr<tgfx::Typeface>& typeface) const override;
 
