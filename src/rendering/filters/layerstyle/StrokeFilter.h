@@ -18,20 +18,21 @@
 
 #pragma once
 
-#include "DropShadowSpreadFilter.h"
+#include "SolidStrokeFilter.h"
+#include "AlphaEdgeDetectFilter.h"
 #include "rendering/filters/LayerFilter.h"
 #include "rendering/filters/utils/FilterBuffer.h"
 
 namespace pag {
-class DropShadowFilter : public LayerFilter {
+class StrokeFilter : public LayerFilter {
  public:
-  explicit DropShadowFilter(DropShadowStyle* layerStyle);
+  explicit StrokeFilter(StrokeStyle* layerStyle);
 
-  DropShadowFilter(const DropShadowFilter&) = delete;
+  StrokeFilter(const StrokeFilter&) = delete;
 
-  DropShadowFilter(DropShadowFilter&&) = delete;
+  StrokeFilter(StrokeFilter&&) = delete;
 
-  ~DropShadowFilter() override;
+  ~StrokeFilter() override;
 
   bool initialize(tgfx::Context* context) override;
 
@@ -42,30 +43,23 @@ class DropShadowFilter : public LayerFilter {
             const FilterTarget* target) override;
 
  private:
-  void updateParamModeNotFullSpread(const tgfx::Rect& contentBounds);
-  void updateParamModeFullSpread(const tgfx::Rect& contentBounds);
-
-  void onDrawModeNotSpread(tgfx::Context* context, const FilterSource* source,
-                           const FilterTarget* target);
-  void onDrawModeNotFullSpread(tgfx::Context* context, const FilterSource* source,
-                               const FilterTarget* target);
-  void onDrawModeFullSpread(tgfx::Context* context, const FilterSource* source,
+  void onDrawPositionOutside(tgfx::Context* context, const FilterSource* source,
+                             const FilterTarget* target);
+  void onDrawPositionInsideOrCenter(tgfx::Context* context, const FilterSource* source,
                             const FilterTarget* target);
 
-  DropShadowStyle* layerStyle = nullptr;
+  StrokeStyle* layerStyle = nullptr;
 
-  std::shared_ptr<FilterBuffer> spreadFilterBuffer = nullptr;
+  std::shared_ptr<FilterBuffer> alphaEdgeDetectFilterBuffer = nullptr;
 
-  DropShadowSpreadFilter* spreadFilter = nullptr;
-  DropShadowSpreadFilter* spreadThickFilter = nullptr;
+  Enum strokePosition;
+  
+  SolidStrokeOption strokeOption;
+  SolidStrokeFilter* strokeFilter = nullptr;
+  SolidStrokeFilter* strokeThickFilter = nullptr;
+  AlphaEdgeDetectFilter* alphaEdgeDetectFilter = nullptr;
 
   tgfx::Color color = tgfx::Color::Black();
-  float spread = 0.f;
   float spreadSize = 0.f;
-  float blurXSize = 0.f;
-  float blurYSize = 0.f;
-  float offsetX = 0.f;
-  float offsetY = 0.f;
-  std::vector<tgfx::Rect> filtersBounds = {};
 };
 }  // namespace pag

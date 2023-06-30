@@ -21,12 +21,22 @@
 #include "rendering/filters/LayerFilter.h"
 
 namespace pag {
-enum class DropShadowStyleMode { Normal, Thick };
+enum class SolidStrokeMode { Normal, Thick };
 
-class DropShadowSpreadFilter : public LayerFilter {
+struct SolidStrokeOption {
+  Color color = Black;
+  Opacity opacity = 0.0f;
+  float spreadSize = 0.0f;
+  bool isHollow = false;
+  bool isSolid = false;
+};
+
+class SolidStrokeFilter : public LayerFilter {
  public:
-  explicit DropShadowSpreadFilter(DropShadowStyle* style, DropShadowStyleMode mode);
-  ~DropShadowSpreadFilter() override = default;
+  explicit SolidStrokeFilter(SolidStrokeMode mode);
+  ~SolidStrokeFilter() override = default;
+  
+  void onUpdateOption(SolidStrokeOption option);
 
  protected:
   std::string onBuildFragmentShader() override;
@@ -35,17 +45,19 @@ class DropShadowSpreadFilter : public LayerFilter {
 
   void onUpdateParams(tgfx::Context* context, const tgfx::Rect& contentBounds,
                       const tgfx::Point& filterScale) override;
-
+  
   std::vector<tgfx::Point> computeVertices(const tgfx::Rect& contentBounds,
                                            const tgfx::Rect& transformedBounds,
                                            const tgfx::Point& filterScale) override;
 
  private:
-  DropShadowStyle* layerStyle = nullptr;
-  DropShadowStyleMode styleMode;
+  SolidStrokeOption option;
+  SolidStrokeMode styleMode;
 
-  int spreadColorHandle = -1;
-  int spreadAlphaHandle = -1;
-  int spreadSizeHandle = -1;
+  int colorHandle = -1;
+  int alphaHandle = -1;
+  int sizeHandle = -1;
+  int isHollowHandle = -1;
+  int isSolidHandle = -1;
 };
 }  // namespace pag

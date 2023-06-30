@@ -18,23 +18,25 @@
 
 #pragma once
 
+#include "LayerFilter.h"
+
 namespace pag {
+class AlphaEdgeDetectFilter : public LayerFilter {
+ public:
+  explicit AlphaEdgeDetectFilter();
+  ~AlphaEdgeDetectFilter() override = default;
 
-#define BLUR_LIMIT_BLURRINESS (40.0f)
-#define BLUR_MODE_PIC_MAX_RADIUS (16.0f)
-#define BLUR_MODE_PIC_MAX_LEVEL (3.0f)
-#define BLUR_MODE_SHADOW_MAX_RADIUS (16.0f)
-#define BLUR_MODE_SHADOW_MAX_LEVEL (3.0f)
-#define STROKE_MAX_SPREAD_SIZE (25.0f)
-#define STROKE_SPREAD_MIN_THICK_SIZE (12.0f)
+ protected:
+  std::string onBuildFragmentShader() override;
 
-enum class BlurMode {
-  Picture = 0,
-  Shadow = 1,
-};
-enum class BlurDirection {
-  Both = 0,
-  Vertical = 1,
-  Horizontal = 2,
+  void onPrepareProgram(tgfx::Context* context, unsigned program) override;
+
+  void onUpdateParams(tgfx::Context* context, const tgfx::Rect& contentBounds,
+                      const tgfx::Point& filterScale) override;
+
+ private:
+  // Handle
+  int horizontalStepHandle = -1;
+  int verticalStepHandle = -1;
 };
 }  // namespace pag
