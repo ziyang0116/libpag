@@ -24,11 +24,10 @@ namespace pag {
 enum class SolidStrokeMode { Normal, Thick };
 
 struct SolidStrokeOption {
+  Enum position = 0;
   Color color = Black;
   Opacity opacity = 0.0f;
   float spreadSize = 0.0f;
-  bool isHollow = false;
-  bool isSolid = false;
 };
 
 class SolidStrokeFilter : public LayerFilter {
@@ -37,6 +36,8 @@ class SolidStrokeFilter : public LayerFilter {
   ~SolidStrokeFilter() override = default;
   
   void onUpdateOption(SolidStrokeOption option);
+  
+  void onUpdateOriginalTexture(const tgfx::GLTextureInfo* sampler);
 
  protected:
   std::string onBuildFragmentShader() override;
@@ -53,11 +54,15 @@ class SolidStrokeFilter : public LayerFilter {
  private:
   SolidStrokeOption option;
   SolidStrokeMode styleMode;
+  tgfx::GLTextureInfo originalSampler;
 
   int colorHandle = -1;
   int alphaHandle = -1;
   int sizeHandle = -1;
-  int isHollowHandle = -1;
-  int isSolidHandle = -1;
+  int originalTextureHandle = -1;
+  int isUseOriginalTextureHandle = -1;
+  int isOutsideHandle = -1;
+  int isCenterHandle = -1;
+  int isInsideHandle = -1;
 };
 }  // namespace pag

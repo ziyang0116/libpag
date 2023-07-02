@@ -46,6 +46,7 @@ void DropShadowFilter::update(Frame frame, const tgfx::Rect& contentBounds,
   LayerFilter::update(frame, contentBounds, transformedBounds, filterScale);
                                                            
   spread = layerStyle->spread->getValueAt(layerFrame);
+  color = ToTGFX(layerStyle->color->getValueAt(layerFrame));
   auto size = layerStyle->size->getValueAt(layerFrame);
   spread *= (spread == 1.f) ? 1.f : 0.8f;
   spreadSize = size * spread;

@@ -36,10 +36,16 @@ OuterGlowStyle::~OuterGlowStyle() {
 }
 
 bool OuterGlowStyle::visibleAt(Frame) const {
-  return false;
+  return true;
 }
 
-void OuterGlowStyle::transformBounds(Rect*, const Point&, Frame) const {
+void OuterGlowStyle::transformBounds(Rect* contentBounds, const Point& filterScale,
+                                     Frame layerFrame) const {
+  auto spreadValue = spread->getValueAt(layerFrame);
+  auto sizeValue = size->getValueAt(layerFrame);
+  spreadValue *= (spreadValue == 1.f) ? 1.f : 0.8f;
+  auto spreadSize = sizeValue * spreadValue;
+  contentBounds->outset(spreadSize * filterScale.x, spreadSize * filterScale.y);
 }
 
 void OuterGlowStyle::excludeVaryingRanges(std::vector<TimeRange>* timeRanges) const {

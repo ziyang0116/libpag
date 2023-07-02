@@ -25,15 +25,19 @@ static const char SOLID_STROKE_FRAGMENT_SHADER[] = R"(
         #version 100
         precision highp float;
         uniform sampler2D uTextureInput;
+        uniform sampler2D uOriginalTextureInput;
         uniform vec3 uColor;
         uniform float uAlpha;
         uniform vec2 uSize;
-        uniform float uIsHollow;
-        uniform float uIsSolid;
+        uniform float uIsUseOriginalTexture;
+        uniform float uIsOutside;
+        uniform float uIsCenter;
+        uniform float uIsInside;
 
         varying vec2 vertexColor;
 
         const float PI = 3.1415926535;
+        float threshold = 0.3;
 
         float check(vec2 point) {
             vec2 result = step(point, vec2(1.0)) * step(vec2(0.0), point);
@@ -43,8 +47,8 @@ static const char SOLID_STROKE_FRAGMENT_SHADER[] = R"(
         void main()
         {
             vec2 point = vertexColor;
-            vec4 srcColor = texture2D(uTextureInput, point);
-            float alphaSum = srcColor.a * check(point);
+            vec4 inputColor = texture2D(uTextureInput, point);
+            float alphaSum = inputColor.a * check(point);
             for (float i = 0.0; i <= 180.0; i += 11.25) {
                 float arc = i * PI / 180.0;
                 float measureX = cos(arc) * uSize.x;
@@ -54,12 +58,15 @@ static const char SOLID_STROKE_FRAGMENT_SHADER[] = R"(
                 point = vertexColor + vec2(measureX, -measureY);
                 alphaSum += texture2D(uTextureInput, point).a * check(point);
             }
+        
+            vec4 srcColor = (uIsUseOriginalTexture == 1.0) ? texture2D(uOriginalTextureInput, vertexColor) : inputColor;
     
-            vec4 result = vec4(uColor * uAlpha, uAlpha);
-            result = (uIsHollow > 0.0 && srcColor.a > 0.0) ? vec4(0.0) : result;
-            result = (uIsSolid > 0.0 && srcColor.a > 0.0) ? result : vec4(0.0);
+            vec4 result = (alphaSum > 0.0) ? vec4(uColor * uAlpha, uAlpha) : vec4(0.0);
+            result = (uIsOutside == 1.0 && srcColor.a > threshold) ? srcColor : result;
+            result = (uIsCenter == 1.0 && result.a < threshold) ? srcColor : result;
+            result = (uIsInside == 1.0 && (result.a < threshold || srcColor.a < threshold)) ? srcColor : result;
 
-            gl_FragColor = (alphaSum > 0.0) ? result : vec4(0.0);
+            gl_FragColor = result;
         }
     )";
 
@@ -67,15 +74,19 @@ static const char SOLID_STROKE_THICK_FRAGMENT_SHADER[] = R"(
         #version 100
         precision highp float;
         uniform sampler2D uTextureInput;
+        uniform sampler2D uOriginalTextureInput;
         uniform vec3 uColor;
         uniform float uAlpha;
         uniform vec2 uSize;
-        uniform float isHollow;
-        uniform float uIsSolid;
+        uniform float uIsUseOriginalTexture;
+        uniform float uIsOutside;
+        uniform float uIsCenter;
+        uniform float uIsInside;
 
         varying vec2 vertexColor;
 
         const float PI = 3.1415926535;
+        float threshold = 0.3;
 
         float check(vec2 point) {
             vec2 result = step(point, vec2(1.0)) * step(vec2(0.0), point);
@@ -85,8 +96,8 @@ static const char SOLID_STROKE_THICK_FRAGMENT_SHADER[] = R"(
         void main()
         {
             vec2 point = vertexColor;
-            vec4 srcColor = texture2D(uTextureInput, point);
-            float alphaSum = srcColor.a * check(point);
+            vec4 inputColor = texture2D(uTextureInput, point);
+            float alphaSum = inputColor.a * check(point);
             for (float i = 0.0; i <= 180.0; i += 11.25) {
                 float arc = i * PI / 180.0;
                 float measureX = cos(arc) * uSize.x;
@@ -100,12 +111,15 @@ static const char SOLID_STROKE_THICK_FRAGMENT_SHADER[] = R"(
                 point = vertexColor + vec2(measureX / 2.0, -measureY / 2.0);
                 alphaSum += texture2D(uTextureInput, point).a * check(point);
             }
-
-            vec4 result = vec4(uColor * uAlpha, uAlpha);
-            result = (uIsHollow > 0.0 && srcColor.a > 0.0) ? vec4(0.0) : result;
-            result = (uIsSolid > 0.0 && srcColor.a > 0.0) ? result : vec4(0.0);
+        
+            vec4 srcColor = (uIsUseOriginalTexture == 1.0) ? texture2D(uOriginalTextureInput, vertexColor) : inputColor;
     
-            gl_FragColor = (alphaSum > 0.0) ? result : vec4(0.0);
+            vec4 result = (alphaSum > 0.0) ? vec4(uColor * uAlpha, uAlpha) : vec4(0.0);
+            result = (uIsOutside == 1.0 && srcColor.a > threshold) ? srcColor : result;
+            result = (uIsCenter == 1.0 && result.a < threshold) ? srcColor : result;
+            result = (uIsInside == 1.0 && (result.a < threshold || srcColor.a < threshold)) ? srcColor : result;
+    
+            gl_FragColor = result;
         }
     )";
 
@@ -122,15 +136,22 @@ std::string SolidStrokeFilter::onBuildFragmentShader() {
 
 void SolidStrokeFilter::onPrepareProgram(tgfx::Context* context, unsigned program) {
   auto gl = tgfx::GLFunctions::Get(context);
+  originalTextureHandle = gl->getUniformLocation(program, "uOriginalTextureInput");
+  isUseOriginalTextureHandle = gl->getUniformLocation(program, "uIsUseOriginalTexture");
   colorHandle = gl->getUniformLocation(program, "uColor");
   alphaHandle = gl->getUniformLocation(program, "uAlpha");
   sizeHandle = gl->getUniformLocation(program, "uSize");
-  isHollowHandle = gl->getUniformLocation(program, "uIsHollow");
-  isSolidHandle = gl->getUniformLocation(program, "uIsSolid");
+  isOutsideHandle = gl->getUniformLocation(program, "uIsOutside");
+  isCenterHandle = gl->getUniformLocation(program, "uIsCenter");
+  isInsideHandle = gl->getUniformLocation(program, "uIsInside");
 }
 
 void SolidStrokeFilter::onUpdateOption(SolidStrokeOption newOption) {
   option = newOption;
+}
+
+void SolidStrokeFilter::onUpdateOriginalTexture(const tgfx::GLTextureInfo* sampler) {
+  originalSampler = {sampler->id, sampler->target, sampler->format};
 }
 
 void SolidStrokeFilter::onUpdateParams(tgfx::Context* context, const tgfx::Rect& contentBounds,
@@ -143,12 +164,20 @@ void SolidStrokeFilter::onUpdateParams(tgfx::Context* context, const tgfx::Rect&
   spreadSizeX = std::min(spreadSizeX, STROKE_MAX_SPREAD_SIZE);
   spreadSizeY = std::min(spreadSizeY, STROKE_MAX_SPREAD_SIZE);
   auto gl = tgfx::GLFunctions::Get(context);
+  if (originalSampler.id != 0) {
+    ActiveGLTexture(context, 1, &originalSampler);
+    gl->uniform1i(originalTextureHandle, 1);
+    gl->uniform1f(isUseOriginalTextureHandle, 1.0);
+  } else {
+    gl->uniform1f(isUseOriginalTextureHandle, 0.0);
+  }
   gl->uniform3f(colorHandle, color.red, color.green, color.blue);
   gl->uniform1f(alphaHandle, alpha);
   gl->uniform2f(sizeHandle, spreadSizeX / contentBounds.width(),
                 spreadSizeY / contentBounds.height());
-  gl->uniform1f(isHollowHandle, option.isHollow);
-  gl->uniform1f(isSolidHandle, option.isSolid);
+  gl->uniform1f(isOutsideHandle, option.position == StrokePosition::Outside);
+  gl->uniform1f(isCenterHandle, option.position == StrokePosition::Center);
+  gl->uniform1f(isInsideHandle, option.position == StrokePosition::Inside);
 }
 
 std::vector<tgfx::Point> SolidStrokeFilter::computeVertices(const tgfx::Rect&,

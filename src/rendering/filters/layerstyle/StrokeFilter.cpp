@@ -38,7 +38,7 @@ StrokeFilter::~StrokeFilter() {
 
 bool StrokeFilter::initialize(tgfx::Context* context) {
   if (!strokeFilter->initialize(context) || !strokeThickFilter->initialize(context)
-      || alphaEdgeDetectFilter->initialize(context)) {
+      || !alphaEdgeDetectFilter->initialize(context)) {
     return false;
   }
   return true;
@@ -55,16 +55,12 @@ void StrokeFilter::update(Frame frame, const tgfx::Rect& contentBounds,
   strokeOption.color = layerStyle->color->getValueAt(layerFrame);
   strokeOption.opacity = layerStyle->opacity->getValueAt(layerFrame);
   strokeOption.spreadSize = spreadSize;
+  strokeOption.position = strokePosition;
   
-  if (strokePosition == StrokePosition::Outside) {
-    strokeOption.isHollow = true;
-    strokeOption.isSolid = false;
+  if (strokePosition == StrokePosition::Center) {
+    strokeOption.spreadSize *= 0.4;
   } else if (strokePosition == StrokePosition::Inside) {
-    strokeOption.isHollow = false;
-    strokeOption.isSolid = true;
-  } else {
-    strokeOption.isHollow = false;
-    strokeOption.isSolid = false;
+    strokeOption.spreadSize *= 0.8;
   }
 
   auto filterBounds = contentBounds;
@@ -103,8 +99,8 @@ void StrokeFilter::onDrawPositionOutside(tgfx::Context* context, const FilterSou
 
 void StrokeFilter::onDrawPositionInsideOrCenter(tgfx::Context* context, const FilterSource* source,
                                                 const FilterTarget* target) {
-  auto targetWidth = static_cast<int>(ceilf(source->width * source->scale.x));
-  auto targetHeight = static_cast<int>(ceilf(source->height * source->scale.y));
+  auto targetWidth = source->width;
+  auto targetHeight = source->height;
   if (alphaEdgeDetectFilterBuffer == nullptr || alphaEdgeDetectFilterBuffer->width() != targetWidth ||
       alphaEdgeDetectFilterBuffer->height() != targetHeight) {
     alphaEdgeDetectFilterBuffer = FilterBuffer::Make(context, targetWidth, targetHeight);
@@ -112,6 +108,7 @@ void StrokeFilter::onDrawPositionInsideOrCenter(tgfx::Context* context, const Fi
   if (alphaEdgeDetectFilterBuffer == nullptr) {
     return;
   }
+  
   alphaEdgeDetectFilterBuffer->clearColor();
   auto alphaEdgeDetectTarget = alphaEdgeDetectFilterBuffer->toFilterTarget(tgfx::Matrix::I());
   alphaEdgeDetectFilter->draw(context, source, alphaEdgeDetectTarget.get());
@@ -119,8 +116,10 @@ void StrokeFilter::onDrawPositionInsideOrCenter(tgfx::Context* context, const Fi
   auto newSource = alphaEdgeDetectFilterBuffer->toFilterSource(source->scale);
 
   if (spreadSize < STROKE_SPREAD_MIN_THICK_SIZE) {
+    strokeFilter->onUpdateOriginalTexture(&source->sampler);
     strokeFilter->draw(context, newSource.get(), target);
   } else {
+    strokeThickFilter->onUpdateOriginalTexture(&source->sampler);
     strokeThickFilter->draw(context, newSource.get(), target);
   }
 }

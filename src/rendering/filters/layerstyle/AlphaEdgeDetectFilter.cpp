@@ -27,20 +27,20 @@ static const char FRAGMENT_SHADER[] = R"(
         uniform float mHorizontalStep;
         uniform float mVerticalStep;
     
-        float threshold = 0.9f;
+        float threshold = 0.9;
 
         void main() {
-            float alphaSum = 0.0f;
-            alphaSum += floor(texture2D(sTexture, target + vec2(-mHorizontalStep, -mVerticalStep)).a + threshold);
-            alphaSum += floor(texture2D(sTexture, target + vec2(-mHorizontalStep, 0.0f)).a + threshold);
-            alphaSum += floor(texture2D(sTexture, target + vec2(-mHorizontalStep, mVerticalStep)).a + threshold);
-            alphaSum += floor(texture2D(sTexture, target + vec2(mHorizontalStep, -mVerticalStep)).a + threshold);
-            alphaSum += floor(texture2D(sTexture, target + vec2(mHorizontalStep, 0.0f)).a + threshold);
-            alphaSum += floor(texture2D(sTexture, target + vec2(mHorizontalStep, mVerticalStep)).a + threshold);
-            alphaSum += floor(texture2D(sTexture, target + vec2(0.0f, -mVerticalStep)).a + threshold);
-            alphaSum += floor(texture2D(sTexture, target + vec2(0.0f, 0.0f)).a + threshold);
-            alphaSum += floor(texture2D(sTexture, target + vec2(0.0f, mVerticalStep)).a + threshold);
-            gl_FragColor = vec4(vec3(0.0f), step(alphaSum * (alphaSum - 9.0f), 1.0));
+            float alphaSum = 0.0;
+            alphaSum += floor(texture2D(sTexture, vertexColor + vec2(-mHorizontalStep, -mVerticalStep)).a + threshold);
+            alphaSum += floor(texture2D(sTexture, vertexColor + vec2(-mHorizontalStep, 0.0)).a + threshold);
+            alphaSum += floor(texture2D(sTexture, vertexColor + vec2(-mHorizontalStep, mVerticalStep)).a + threshold);
+            alphaSum += floor(texture2D(sTexture, vertexColor + vec2(mHorizontalStep, -mVerticalStep)).a + threshold);
+            alphaSum += floor(texture2D(sTexture, vertexColor + vec2(mHorizontalStep, 0.0)).a + threshold);
+            alphaSum += floor(texture2D(sTexture, vertexColor + vec2(mHorizontalStep, mVerticalStep)).a + threshold);
+            alphaSum += floor(texture2D(sTexture, vertexColor + vec2(0.0, -mVerticalStep)).a + threshold);
+            alphaSum += floor(texture2D(sTexture, vertexColor + vec2(0.0, 0.0)).a + threshold);
+            alphaSum += floor(texture2D(sTexture, vertexColor + vec2(0.0, mVerticalStep)).a + threshold);
+            gl_FragColor = (alphaSum > 0.0 && alphaSum < 9.0) ? vec4(1.0) : vec4(0.0);
         }
     )";
 
