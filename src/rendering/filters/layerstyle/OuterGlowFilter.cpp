@@ -2,7 +2,7 @@
 //
 //  Tencent is pleased to support the open source community by making libpag available.
 //
-//  Copyright (C) 2021 THL A29 Limited, a Tencent company. All rights reserved.
+//  Copyright (C) 2023 THL A29 Limited, a Tencent company. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 //  except in compliance with the License. You may obtain a copy of the License at
@@ -46,11 +46,12 @@ void OuterGlowFilter::update(Frame frame, const tgfx::Rect& contentBounds,
   LayerFilter::update(frame, contentBounds, transformedBounds, filterScale);
                                                            
   spread = layerStyle->spread->getValueAt(layerFrame);
+  color = ToTGFX(layerStyle->color->getValueAt(layerFrame));
   auto size = layerStyle->size->getValueAt(layerFrame);
   auto range = layerStyle->range->getValueAt(layerFrame);
   spread *= (spread == 1.f) ? 1.f : 0.8f;
   spreadSize = size * spread / range;
-  auto blurSize = size * (1.f - spread) * 2.f;
+  auto blurSize = size * (1.f - spread) * 2.f / range;
   blurXSize = blurSize * filterScale.x;
   blurYSize = blurSize * filterScale.y;
   

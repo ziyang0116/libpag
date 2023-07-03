@@ -125,7 +125,7 @@ std::unique_ptr<LayerFilter> LayerFilter::Make(LayerStyle* layerStyle) {
       filter = new OuterGlowFilter(reinterpret_cast<OuterGlowStyle*>(layerStyle));
       break;
     case LayerStyleType::Stroke:
-      filter = new OuterGlowFilter(reinterpret_cast<OuterGlowStyle*>(layerStyle));
+      filter = new StrokeFilter(reinterpret_cast<StrokeStyle*>(layerStyle));
       break;
     case LayerStyleType::GradientOverlay:
       filter = new GradientOverlayFilter(reinterpret_cast<GradientOverlayStyle*>(layerStyle));
