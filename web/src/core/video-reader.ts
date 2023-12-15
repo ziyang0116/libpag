@@ -137,57 +137,6 @@ export class VideoReader {
     }
   }
 
-  public async prepare2(targetFrame: number, playbackRate: number) {
-    this.setError(null); // reset error
-    this.isSought = false; // reset seek status
-    const { currentTime } = this.videoEl!;
-    const targetTime = targetFrame / this.frameRate;
-    if (currentTime === 0 && targetTime === 0) {
-      if (!this.canplay && !SAFARI_OR_IOS_WEBVIEW) {
-        await waitVideoCanPlay(this.videoEl!);
-      } else {
-        try {
-          await this.play();
-        } catch (e) {
-          this.setError(e);
-        }
-        await new Promise<void>((resolve) => {
-          requestAnimationFrame(() => {
-            this.pause();
-            resolve();
-          });
-        });
-      }
-    } else {
-      if (Math.round(targetTime * this.frameRate) === Math.round(currentTime * this.frameRate)) {
-        // Current frame
-      } else if (this.staticTimeRanges?.contains(targetFrame)) {
-        // Static frame
-        await this.seek(targetTime, false);
-        return;
-      } else if (Math.abs(currentTime - targetTime) < (1 / this.frameRate) * VIDEO_DECODE_WAIT_FRAME) {
-        // Within tolerable frame rate deviation
-      } else {
-        // Seek and play
-        this.isSought = true;
-        await this.seek(targetTime);
-        return;
-      }
-    }
-
-    const targetPlaybackRate = Math.min(Math.max(playbackRate, VIDEO_PLAYBACK_RATE_MIN), VIDEO_PLAYBACK_RATE_MAX);
-    if (!this.disablePlaybackRate && this.videoEl!.playbackRate !== targetPlaybackRate) {
-      this.videoEl!.playbackRate = targetPlaybackRate;
-    }
-
-    if (this.isPlaying && this.videoEl!.paused) {
-      try {
-        await this.play();
-      } catch (e) {
-        this.setError(e);
-      }
-    }
-  }
   public async prepare(targetFrame: number, playbackRate: number) {
     console.log('prepare called with targetFrame:', targetFrame, 'playbackRate:', playbackRate); // Log the input parameters
     this.setError(null); // reset error
@@ -364,7 +313,7 @@ export class VideoReader {
     });
   }
 
-  private seek(targetTime: number, play = true) {
+  private seek2(targetTime: number, play = true) {
     return new Promise<void>((resolve) => {
       let isCallback = false;
       let timer: any = null;
@@ -405,7 +354,9 @@ export class VideoReader {
         return;
       }
       addListener(this.videoEl, 'seeked', seekCallback);
-      this.videoEl!.currentTime = targetTime;
+      // this.videoEl!.currentTime = targetTime;
+
+      this.videoEl.fastSeek(targetTime)
       console.log('Set video currentTime to:', targetTime); // Log setting currentTime
       // Timeout
       timer = setTimeout(() => {
@@ -423,6 +374,38 @@ export class VideoReader {
           }
         }
       }, (1000 / this.frameRate) * VIDEO_DECODE_SEEK_TIMEOUT_FRAME);
+    });
+  }
+
+  private seek(targetTime: number, play = true) {
+    return new Promise<void>((resolve, reject) => {
+      const onSeeked = () => {
+        removeListener(this.videoEl, 'seeked', onSeeked);
+        clearTimeout(seekTimeout);
+        resolve();
+      };
+  
+      const onCanPlay = () => {
+        removeListener(this.videoEl, 'canplay', onCanPlay);
+        // Now that we have enough data, perform the seek.
+        this.videoEl!.currentTime = targetTime;
+        addListener(this.videoEl, 'seeked', onSeeked);
+      };
+  
+      const seekTimeout = setTimeout(() => {
+        removeListener(this.videoEl, 'canplay', onCanPlay);
+        removeListener(this.videoEl, 'seeked', onSeeked);
+        reject(new Error('Seek operation timed out.'));
+      }, (1000 / this.frameRate) * VIDEO_DECODE_SEEK_TIMEOUT_FRAME);
+  
+      // Check if we need to wait for 'canplay' event before seeking.
+      if (this.videoEl.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+        addListener(this.videoEl, 'canplay', onCanPlay);
+      } else {
+        // We already have enough data to perform the seek.
+        this.videoEl!.currentTime = targetTime;
+        addListener(this.videoEl, 'seeked', onSeeked);
+      }
     });
   }
 
