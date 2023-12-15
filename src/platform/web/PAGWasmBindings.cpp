@@ -24,6 +24,7 @@
 #include "platform/web/GPUDrawable.h"
 #include "platform/web/WebSoftwareDecoderFactory.h"
 #include "rendering/editing/StillImage.h"
+#include "rendering/editing/PrintLog.h"
 #include "tgfx/core/ImageInfo.h"
 #include "tgfx/core/PathTypes.h"
 #include "tgfx/opengl/GLDefines.h"
@@ -95,6 +96,7 @@ bool PAGBindInit() {
       .function("_trackMatteLayer", &PAGLayer::trackMatteLayer)
       .function("_excludedFromTimeline", &PAGLayer::excludedFromTimeline)
       .function("_setExcludedFromTimeline", &PAGLayer::setExcludedFromTimeline)
+      .function("PrintLog2", &PrintLog2)
       .function("_isPAGFile", &PAGLayer::isPAGFile);
 
   class_<PAGSolidLayer, base<PAGLayer>>("_PAGSolidLayer")

@@ -71,10 +71,10 @@ export class PAGView {
     pagView.pagSurface = this.makePAGSurface(pagView.pagGlContext, pagView.rawWidth, pagView.rawHeight);
     pagView.player.setSurface(pagView.pagSurface);
     pagView.player.setComposition(file);
-    pagView.setProgress(0);
+    // pagView.setProgress(0);
     if (pagView.pagViewOptions.firstFrame) {
-      await pagView.flush();
-      pagView.playFrame = 0;
+      // await pagView.flush();
+      // pagView.playFrame = 0;
     }
     return pagView;
   }

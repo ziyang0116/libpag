@@ -75,11 +75,20 @@ window.onload = async () => {
     }
   });
   document.getElementById('btn-test-vector-pag')?.addEventListener('click', () => {
-    const url = './assets/like.pag';
+    // const url = './assets/like.pag';
+    const url = './assets/red.pag';
     fetch(url)
       .then((response) => response.arrayBuffer())
       .then((arrayBuffer) => {
-        createPAGView(arrayBuffer);
+        const pagView = createPAGView(arrayBuffer);
+
+        // const pagView = await PAG.PAGView.init(pagFile, canvas, { firstFrame: false });
+        // // Set PAGView progress.
+        // pagView.setProgress(0.5);
+        // await pagView.flush();
+        // const pagView = await PAG.PAGView.init(pagFile, canvas, { firstFrame: false });
+        // Set PAGView progress.
+       
       });
   });
   document.getElementById('btn-test-video-pag')?.addEventListener('click', () => {
@@ -92,33 +101,50 @@ window.onload = async () => {
       });
   });
   document.getElementById('btn-test-text-pag')?.addEventListener('click', async () => {
-    const url = './assets/test2.pag';
+    const url = './assets/red.pag';
     const response = await fetch(url);
     const blob = await response.blob();
     const file = new window.File([blob], url.replace(/(.*\/)*([^.]+)/i, '$2'));
     await createPAGView(file);
-    const textDoc = pagFile.getTextData(0);
-    console.log(textDoc);
-    textDoc.text = '替换后的文字🤔#️⃣#*️⃣*1️⃣🔟🇨🇳🏴󠁧󠁢󠁥󠁮󠁧󠁿🤡👨🏼‍🦱👨‍👨‍👧‍👦';
-    textDoc.fillColor = { red: 255, green: 255, blue: 255 };
-    textDoc.applyFill = true;
-    textDoc.backgroundAlpha = 100;
-    textDoc.backgroundColor = { red: 255, green: 0, blue: 0 };
-    textDoc.baselineShift = 200;
-    textDoc.fauxBold = true;
-    textDoc.fauxItalic = false;
-    textDoc.fontFamily = 'SourceHanSerifCN';
-    textDoc.fontSize = 100;
-    textDoc.justification = types.ParagraphJustification.CenterJustify;
-    textDoc.strokeWidth = 20;
-    textDoc.strokeColor = { red: 0, green: 0, blue: 0 };
-    textDoc.applyStroke = true;
-    textDoc.strokeOverFill = true;
-    textDoc.tracking = 600;
-    pagFile.replaceText(0, textDoc);
-    console.log(pagFile.getTextData(0));
-    await pagView.flush();
+
+    // const pagView = await PAG.PAGView.init(pagFile, canvas, { firstFrame: false });
+    // // Set PAGView progress.
+    pagView.setProgress(0.99);
+    // pagView.setProgress(0);
+    // await pagView.flush();
+    // const pagView = await PAG.PAGView.init(pagFile, canvas, { firstFrame: false });
+    // Set PAGView progress.
+
+    // const textDoc = pagFile.getTextData(0);
+    // console.log(textDoc);
+    // textDoc.text = '替换后的文字🤔#️⃣#*️⃣*1️⃣🔟🇨🇳🏴󠁧󠁢󠁥󠁮󠁧󠁿🤡👨🏼‍🦱👨‍👨‍👧‍👦';
+    // textDoc.fillColor = { red: 255, green: 255, blue: 255 };
+    // textDoc.applyFill = true;
+    // textDoc.backgroundAlpha = 100;
+    // textDoc.backgroundColor = { red: 255, green: 0, blue: 0 };
+    // textDoc.baselineShift = 200;
+    // textDoc.fauxBold = true;
+    // textDoc.fauxItalic = false;
+    // textDoc.fontFamily = 'SourceHanSerifCN';
+    // textDoc.fontSize = 100;
+    // textDoc.justification = types.ParagraphJustification.CenterJustify;
+    // textDoc.strokeWidth = 20;
+    // textDoc.strokeColor = { red: 0, green: 0, blue: 0 };
+    // textDoc.applyStroke = true;
+    // textDoc.strokeOverFill = true;
+    // textDoc.tracking = 600;
+    // pagFile.replaceText(0, textDoc);
+    // console.log(pagFile.getTextData(0));
+    // await pagView.flush();
   });
+
+  const url = './assets/red.pag';
+  const response = await fetch(url);
+  const blob = await response.blob();
+  const file = new window.File([blob], url.replace(/(.*\/)*([^.]+)/i, '$2'));
+  await createPAGView(file);
+  pagView.setProgress(1);
+  await pagView.flush();
   document.getElementById('btn-enabled-decoder')?.addEventListener('click', async () => {
     if (!window.ffavc) await loadScript('https://cdn.jsdelivr.net/npm/ffavc@latest/lib/ffavc.min.js');
     const FFAVC = await window.ffavc.FFAVCInit();
