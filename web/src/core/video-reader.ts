@@ -137,7 +137,7 @@ export class VideoReader {
     }
   }
 
-  public async prepare(targetFrame: number, playbackRate: number) {
+  public async prepare2(targetFrame: number, playbackRate: number) {
     this.setError(null); // reset error
     this.isSought = false; // reset seek status
     const { currentTime } = this.videoEl!;
@@ -182,6 +182,63 @@ export class VideoReader {
 
     if (this.isPlaying && this.videoEl!.paused) {
       try {
+        await this.play();
+      } catch (e) {
+        this.setError(e);
+      }
+    }
+  }
+  public async prepare(targetFrame: number, playbackRate: number) {
+    console.log('prepare called with targetFrame:', targetFrame, 'playbackRate:', playbackRate); // Log the input parameters
+    this.setError(null); // reset error
+    this.isSought = false; // reset seek status
+    const { currentTime } = this.videoEl!;
+    const targetTime = targetFrame / this.frameRate;
+    console.log('Current time:', currentTime, 'Target time:', targetTime); // Log the current and target times
+    if (currentTime === 0 && targetTime === 0) {
+      if (!this.canplay && !SAFARI_OR_IOS_WEBVIEW) {
+        console.log('Waiting for video can play'); // Log waiting for canplay
+        await waitVideoCanPlay(this.videoEl!);
+      } else {
+        try {
+          console.log('Playing video for the first frame'); // Log playing for the first frame
+          await this.play();
+        } catch (e) {
+          this.setError(e);
+        }
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => {
+            this.pause();
+            resolve();
+          });
+        });
+      }
+    } else {
+      if (Math.round(targetTime * this.frameRate) === Math.round(currentTime * this.frameRate)) {
+        console.log('Already at the current frame'); // Log if already at the current frame
+      } else if (this.staticTimeRanges?.contains(targetFrame)) {
+        console.log('Target frame is within static time ranges'); // Log if within static time ranges
+        await this.seek(targetTime, false);
+        return;
+      } else if (Math.abs(currentTime - targetTime) < (1 / this.frameRate) * VIDEO_DECODE_WAIT_FRAME) {
+        console.log('Within tolerable frame rate deviation'); // Log if within tolerable deviation
+      } else {
+        console.log('Seeking and playing to target frame'); // Log seeking to target frame
+        this.isSought = true;
+        await this.seek(targetTime);
+        return;
+      }
+    }
+  
+    const targetPlaybackRate = Math.min(Math.max(playbackRate, VIDEO_PLAYBACK_RATE_MIN), VIDEO_PLAYBACK_RATE_MAX);
+    if (!this.disablePlaybackRate && this.videoEl!.playbackRate !== targetPlaybackRate) {
+      console.log('Adjusting playback rate to:', targetPlaybackRate); // Log adjusting playback rate
+      this.videoEl!.playbackRate = targetPlaybackRate;
+    }
+  
+    if (this.isPlaying && this.videoEl!.paused) {
+      try {
+        console.log('Resuming playback'); // Log resuming playback
         await this.play();
       } catch (e) {
         this.setError(e);
