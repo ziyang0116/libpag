@@ -312,7 +312,7 @@ export class VideoReader {
     this.bitmapCtx = null;
   }
 
-  private seek(targetTime: number, play = true) {
+  private seek2(targetTime: number, play = true) {
     return new Promise<void>((resolve) => {
       let isCallback = false;
       let timer: any = null;
@@ -357,6 +357,68 @@ export class VideoReader {
           } else {
             removeListener(this.videoEl, 'seeked', seekCallback);
             setVideoState();
+            resolve();
+          }
+        }
+      }, (1000 / this.frameRate) * VIDEO_DECODE_SEEK_TIMEOUT_FRAME);
+    });
+  }
+
+  private seek(targetTime: number, play = true) {
+    return new Promise<void>((resolve) => {
+      let isCallback = false;
+      let timer: any = null;
+      console.log('Seeking to target time:', targetTime, 'Play after seek:', play); // Log the seek target and play status
+      const setVideoState = async () => {
+        if (play && this.videoEl!.paused) {
+          try {
+            console.log('Attempting to play video after seek'); // Log attempting to play
+            await this.play();
+          } catch (e) {
+            this.setError(e);
+            console.error('Error playing video after seek:', e); // Log error if play fails
+          }
+        } else if (!play && !this.videoEl!.paused) {
+          console.log('Pausing video after seek'); // Log pausing video
+          this.videoEl?.pause();
+        }
+      };
+      const seekCallback = async () => {
+        if (!this.videoEl) {
+          this.setError(new Error("Video element doesn't exist!"));
+          console.error("Video element doesn't exist!"); // Log error if video element is missing
+          resolve();
+          return;
+        }
+        removeListener(this.videoEl, 'seeked', seekCallback);
+        await setVideoState();
+        isCallback = true;
+        clearTimeout(timer);
+        timer = null;
+        console.log('Seeked event triggered, current time:', this.videoEl.currentTime); // Log seeked event and current time
+        resolve();
+      };
+      if (!this.videoEl) {
+        this.setError(new Error("Video element doesn't exist!"));
+        console.error("Video element doesn't exist!"); // Log error if video element is missing
+        resolve();
+        return;
+      }
+      addListener(this.videoEl, 'seeked', seekCallback);
+      this.videoEl!.currentTime = targetTime;
+      console.log('Set video currentTime to:', targetTime); // Log setting currentTime
+      // Timeout
+      timer = setTimeout(() => {
+        if (!isCallback) {
+          if (!this.videoEl) {
+            this.setError(new Error("Video element doesn't exist!"));
+            console.error("Video element doesn't exist!"); // Log error if video element is missing
+            resolve();
+            return;
+          } else {
+            removeListener(this.videoEl, 'seeked', seekCallback);
+            setVideoState();
+            console.warn('Seek operation timed out, current time:', this.videoEl.currentTime); // Log timeout and current time
             resolve();
           }
         }
