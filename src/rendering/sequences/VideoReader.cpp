@@ -20,6 +20,7 @@
 #include "base/utils/TimeUtil.h"
 #include "platform/Platform.h"
 #include "tgfx/utils/Clock.h"
+#include "rendering/editing/PrintLog.h"
 
 namespace pag {
 

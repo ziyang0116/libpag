@@ -19,6 +19,7 @@
 #include "HardwareDecoder.h"
 #include "WebVideoSequenceDemuxer.h"
 #include "base/utils/TimeUtil.h"
+#include "rendering/editing/PrintLog.h"
 #include "rendering/sequences/VideoSequenceDemuxer.h"
 #include "tgfx/opengl/GLFunctions.h"
 
@@ -67,6 +68,7 @@ DecodingResult HardwareDecoder::onDecodeFrame() {
     return DecodingResult::EndOfStream;
   }
   currentTimeStamp = pendingTimeStamp;
+  PrintLog2("HardwareDecoder::onDecodeFrame currentTimeStamp:" + std::to_string(currentTimeStamp));
   return DecodingResult::Success;
 }
 
@@ -85,6 +87,7 @@ std::shared_ptr<tgfx::ImageBuffer> HardwareDecoder::onRenderFrame() {
   }
   auto targetFrame = TimeToFrame(currentTimeStamp, frameRate);
   val promise = videoReader.call<val>("prepare", static_cast<int>(targetFrame), playbackRate);
+  PrintLog2("HardwareDecoder::onRenderFrame targetFrame:" + std::to_string(targetFrame));
   return imageReader->acquireNextBuffer(promise);
 }
 }  // namespace pag
