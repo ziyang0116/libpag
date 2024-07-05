@@ -244,6 +244,15 @@ PAG_TEST(PAGLayerTest, AlphaMask) {
   EXPECT_TRUE(Baseline::Compare(TestPAGSurface, "PAGLayerTest/AlphaMask"));
 }
 
+PAG_TEST(PAGLayerTest, MaskBlend) {
+  PAG_SETUP(TestPAGSurface, TestPAGPlayer, TestPAGFile);
+  auto pagFile = LoadPAGFile("resources/apitest/test_mask_blend.pag");
+  TestPAGPlayer->setComposition(pagFile);
+  TestPAGPlayer->setProgress(0.f);
+  TestPAGPlayer->flush();
+  EXPECT_TRUE(Baseline::Compare(TestPAGSurface, "PAGLayerTest/MaskBlend"));
+}
+
 /**
  * 用例描述: 文字缩放
  */

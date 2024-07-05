@@ -21,6 +21,7 @@
 #include "rendering/caches/RenderCache.h"
 #include "rendering/filters/gaussianblur/GaussianBlurFilter.h"
 #include "rendering/utils/PathUtil.h"
+#include "rendering/utils/Trace.h"
 #include "tgfx/core/Canvas.h"
 #include "tgfx/core/Mask.h"
 #include "tgfx/gpu/Surface.h"
@@ -80,6 +81,21 @@ std::shared_ptr<tgfx::Surface> MakeAlphaSurface(tgfx::Context* context, int widt
   return surface;
 }
 
+static tgfx::BlendMode MaskModeToBlendMode(Enum maskMode) {
+  switch (maskMode) {
+    case MaskMode::Subtract:
+      return tgfx::BlendMode::DstOut;
+    case MaskMode::Intersect:
+      return tgfx::BlendMode::SrcIn;
+    case MaskMode::Difference:
+      return tgfx::BlendMode::Xor;
+    case MaskMode::Darken:
+      return tgfx::BlendMode::Darken;
+    default:
+      return tgfx::BlendMode::SrcOver;
+  }
+}
+
 void FeatherMask::draw(Canvas* parentCanvas) const {
   auto surface =
       MakeAlphaSurface(parentCanvas->getContext(), static_cast<int>(ceilf(bounds.width())),
@@ -126,6 +142,7 @@ void FeatherMask::draw(Canvas* parentCanvas) const {
     maskCanvas->drawPath(maskPath, maskPaint);
     auto maskImage = maskSurface->makeImageSnapshot();
     tgfx::Paint blurPaint;
+    blurPaint.setBlendMode(MaskModeToBlendMode(mask->maskMode));
     if (mask->maskFeather) {
       auto blurrinessX = mask->maskFeather->getValueAt(layerFrame).x;
       auto blurrinessY = mask->maskFeather->getValueAt(layerFrame).y;
