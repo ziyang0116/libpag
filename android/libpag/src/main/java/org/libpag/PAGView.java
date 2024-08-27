@@ -298,7 +298,7 @@ public class PAGView extends TextureView implements TextureView.SurfaceTextureLi
             super.onAnimationEnd(animation);
             // Align with iOS platform, avoid triggering this method when stopping
             int repeatCount = ((ValueAnimator) animation).getRepeatCount();
-            if (repeatCount >= 0 && (animation.getDuration() > 0) &&
+            if (repeatCount >= 0 && (animation.getDuration() > 0) && currentPlayTime > animation.getDuration() &&
                     (currentPlayTime * 1.0 / animation.getDuration() > repeatCount)) {
                 notifyEnd();
             }
@@ -361,6 +361,7 @@ public class PAGView extends TextureView implements TextureView.SurfaceTextureLi
         for (PAGViewListener listener : arrayList) {
             listener.onAnimationEnd(PAGView.this);
         }
+        currentPlayTime = 0;
     }
 
     private void updateView() {
@@ -546,6 +547,17 @@ public class PAGView extends TextureView implements TextureView.SurfaceTextureLi
         @Override
         public void run() {
             synchronized (animatorLock) {
+                currentPlayTime = 0;
+                animator.cancel();
+            }
+        }
+    };
+
+
+    private Runnable mAnimatorPauseRunnable = new Runnable() {
+        @Override
+        public void run() {
+            synchronized (animatorLock) {
                 currentPlayTime = animator.getCurrentPlayTime();
                 animator.cancel();
             }
@@ -557,6 +569,21 @@ public class PAGView extends TextureView implements TextureView.SurfaceTextureLi
         _isPlaying = false;
         _isAnimatorPreRunning = null;
         cancelAnimator();
+    }
+
+    public void pause() {
+        Log.i(TAG, "stop");
+        _isPlaying = false;
+        _isAnimatorPreRunning = null;
+        if (isMainThread()) {
+            synchronized (animatorLock) {
+                currentPlayTime = animator.getCurrentPlayTime();
+                animator.cancel();
+            }
+        } else {
+            removeCallbacks(mAnimatorStartRunnable);
+            post(mAnimatorPauseRunnable);
+        }
     }
 
     private boolean isMainThread() {
@@ -581,7 +608,7 @@ public class PAGView extends TextureView implements TextureView.SurfaceTextureLi
     private void cancelAnimator() {
         if (isMainThread()) {
             synchronized (animatorLock) {
-                currentPlayTime = animator.getCurrentPlayTime();
+                currentPlayTime = 0;
                 animator.cancel();
             }
         } else {
@@ -851,31 +878,35 @@ public class PAGView extends TextureView implements TextureView.SurfaceTextureLi
      * every frame. Returns true if the content has changed.
      */
     public boolean flush() {
-        boolean result;
-        if (pagSurface == null) {
-            result = pagPlayer.flush();
-            return result;
-        }
-        if (progressExplicitlySet) {
-            result = pagPlayer.flush();
-            progressExplicitlySet = false;
-            synchronized (animatorLock) {
-                syncCurrentTime();
-                animator.setCurrentPlayTime(currentPlayTime);
+        boolean result = false;
+        try {
+            if (pagSurface == null) {
+                result = pagPlayer.flush();
+                return result;
             }
-        } else {
-            synchronized (animatorLock) {
-                pagPlayer.setProgress(animator.getAnimatedFraction());
-            }
-            result = pagPlayer.flush();
+            if (progressExplicitlySet) {
+                result = pagPlayer.flush();
+                progressExplicitlySet = false;
+                synchronized (animatorLock) {
+                    syncCurrentTime();
+                    animator.setCurrentPlayTime(currentPlayTime);
+                }
+            } else {
+                synchronized (animatorLock) {
+                    pagPlayer.setProgress(animator.getAnimatedFraction());
+                }
+                result = pagPlayer.flush();
 
-        }
-        ArrayList<PAGViewListener> arrayList;
-        synchronized (PAGView.this) {
-            arrayList = new ArrayList<>(mViewListeners);
-        }
-        for (PAGViewListener listener : arrayList) {
-            listener.onAnimationUpdate(PAGView.this);
+            }
+            ArrayList<PAGViewListener> arrayList;
+            synchronized (PAGView.this) {
+                arrayList = new ArrayList<>(mViewListeners);
+            }
+            for (PAGViewListener listener : arrayList) {
+                listener.onAnimationUpdate(PAGView.this);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return result;
     }

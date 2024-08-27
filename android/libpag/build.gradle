@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
-version = '4.1.0'
+version = '4.2.100.04-baseline'
 project.ext.artifactId = 'libpag'
 project.group = 'com.tencent.tav'
 
@@ -63,9 +63,21 @@ task androidSourcesJar(type: Jar) {
     exclude "**/BuildConfig.class"
 }
 
+// Load the local.properties file
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(new FileInputStream(localPropertiesFile))
+}
+
+// Access properties
+def repoUrl = localProperties['REPO_URL']
+def repoUserName = localProperties['REPO_USER_NAME']
+def repoUserPass = localProperties['REPO_USER_Pass']
+
 publishing {
     publications {
-        mavenAar(MavenPublication) {
+        release(MavenPublication) {
             // group id，发布后引用的依赖的 group id
             groupId 'com.tencent.tav'
             // 发布后引用的依赖的 artifact id
@@ -107,99 +119,104 @@ publishing {
     repositories {
         maven {
             // 发布的位置，这里根据发布的版本区分了 SNAPSHOT 和最终版本两种情况
-            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+            def releasesRepoUrl = repoUrl
+            def snapshotsRepoUrl = 'file://' + new File(System.getProperty('user.home'), '.m2/repository').absolutePath
             url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-        }
-    }
-}
-
-signing {
-    sign publishing.publications
-}
-
-project.afterEvaluate {
-    mergeReleaseNativeLibs.doLast {
-        delete {
-            delete project.getBuildDir().path + '/intermediates/merged_native_libs/release/out/lib/armeabi'
-        }
-        copy {
-            from project.getBuildDir().path + '/intermediates/merged_native_libs/release/out/lib/armeabi-v7a'
-            into project.getBuildDir().path + '/intermediates/merged_native_libs/release/out/lib/armeabi'
-            include '*.so'
-        }
-    }
-    stripReleaseDebugSymbols.doLast {
-        delete {
-            delete project.getBuildDir().path + '/intermediates/stripped_native_libs/release/out/lib/armeabi'
-        }
-        copy {
-            from project.getBuildDir().path + '/intermediates/stripped_native_libs/release/out/lib/armeabi-v7a'
-            into project.getBuildDir().path + '/intermediates/stripped_native_libs/release/out/lib/armeabi'
-            include '*.so'
-        }
-    }
-    // 此处为了方便debug，保留debug版本armeabi的拷贝，方便源码接入时候的调试
-    mergeDebugNativeLibs.doLast {
-        delete {
-            delete project.getBuildDir().path + '/intermediates/merged_native_libs/debug/out/lib/armeabi'
-        }
-        copy {
-            from project.getBuildDir().path + '/intermediates/merged_native_libs/debug/out/lib/armeabi-v7a'
-            into project.getBuildDir().path + '/intermediates/merged_native_libs/debug/out/lib/armeabi'
-            include '*.so'
-        }
-    }
-    stripDebugDebugSymbols.doLast {
-        delete {
-            delete project.getBuildDir().path + '/intermediates/stripped_native_libs/debug/out/lib/armeabi'
-        }
-        copy {
-            from project.getBuildDir().path + '/intermediates/stripped_native_libs/debug/out/lib/armeabi-v7a'
-            into project.getBuildDir().path + '/intermediates/stripped_native_libs/debug/out/lib/armeabi'
-            include '*.so'
-        }
-    }
-    publishing {
-        repositories {
-        }
-        publications {
-            aar(MavenPublication) {
-                groupId project.group
-                artifactId project.artifactId
-                version project.version
-
-                artifact bundleReleaseAar
-
-                //The publication doesn't know about our dependencies, so we have to manually add them to the pom
-                pom.withXml {
-                    // for dependencies and exclusions
-                    def dependenciesNode = asNode().appendNode('dependencies')
-                    configurations.api.allDependencies.withType(ModuleDependency) { ModuleDependency dp ->
-                        def dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', dp.group)
-                        dependencyNode.appendNode('artifactId', dp.name)
-                        dependencyNode.appendNode('version', dp.version)
-
-                        // for exclusions
-                        if (dp.excludeRules.size() > 0) {
-                            def exclusions = dependencyNode.appendNode('exclusions')
-                            dp.excludeRules.each { ExcludeRule ex ->
-                                def exclusion = exclusions.appendNode('exclusion')
-                                exclusion.appendNode('groupId', ex.group)
-                                exclusion.appendNode('artifactId', ex.module)
-                            }
-                        }
-                    }
-                }
+            allowInsecureProtocol = true
+            credentials {
+                username = repoUserName
+                password = repoUserPass
             }
         }
     }
 }
 
+//signing {
+//    sign publishing.publications
+//}
+//
+//project.afterEvaluate {
+//    mergeReleaseNativeLibs.doLast {
+//        delete {
+//            delete project.getBuildDir().path + '/intermediates/merged_native_libs/release/out/lib/armeabi'
+//        }
+//        copy {
+//            from project.getBuildDir().path + '/intermediates/merged_native_libs/release/out/lib/armeabi-v7a'
+//            into project.getBuildDir().path + '/intermediates/merged_native_libs/release/out/lib/armeabi'
+//            include '*.so'
+//        }
+//    }
+//    stripReleaseDebugSymbols.doLast {
+//        delete {
+//            delete project.getBuildDir().path + '/intermediates/stripped_native_libs/release/out/lib/armeabi'
+//        }
+//        copy {
+//            from project.getBuildDir().path + '/intermediates/stripped_native_libs/release/out/lib/armeabi-v7a'
+//            into project.getBuildDir().path + '/intermediates/stripped_native_libs/release/out/lib/armeabi'
+//            include '*.so'
+//        }
+//    }
+//    // 此处为了方便debug，保留debug版本armeabi的拷贝，方便源码接入时候的调试
+//    mergeDebugNativeLibs.doLast {
+//        delete {
+//            delete project.getBuildDir().path + '/intermediates/merged_native_libs/debug/out/lib/armeabi'
+//        }
+//        copy {
+//            from project.getBuildDir().path + '/intermediates/merged_native_libs/debug/out/lib/armeabi-v7a'
+//            into project.getBuildDir().path + '/intermediates/merged_native_libs/debug/out/lib/armeabi'
+//            include '*.so'
+//        }
+//    }
+//    stripDebugDebugSymbols.doLast {
+//        delete {
+//            delete project.getBuildDir().path + '/intermediates/stripped_native_libs/debug/out/lib/armeabi'
+//        }
+//        copy {
+//            from project.getBuildDir().path + '/intermediates/stripped_native_libs/debug/out/lib/armeabi-v7a'
+//            into project.getBuildDir().path + '/intermediates/stripped_native_libs/debug/out/lib/armeabi'
+//            include '*.so'
+//        }
+//    }
+//    publishing {
+//        repositories {
+//        }
+//        publications {
+//            aar(MavenPublication) {
+//                groupId project.group
+//                artifactId project.artifactId
+//                version project.version
+//
+//                artifact bundleReleaseAar
+//
+//                //The publication doesn't know about our dependencies, so we have to manually add them to the pom
+//                pom.withXml {
+//                    // for dependencies and exclusions
+//                    def dependenciesNode = asNode().appendNode('dependencies')
+//                    configurations.api.allDependencies.withType(ModuleDependency) { ModuleDependency dp ->
+//                        def dependencyNode = dependenciesNode.appendNode('dependency')
+//                        dependencyNode.appendNode('groupId', dp.group)
+//                        dependencyNode.appendNode('artifactId', dp.name)
+//                        dependencyNode.appendNode('version', dp.version)
+//
+//                        // for exclusions
+//                        if (dp.excludeRules.size() > 0) {
+//                            def exclusions = dependencyNode.appendNode('exclusions')
+//                            dp.excludeRules.each { ExcludeRule ex ->
+//                                def exclusion = exclusions.appendNode('exclusion')
+//                                exclusion.appendNode('groupId', ex.group)
+//                                exclusion.appendNode('artifactId', ex.module)
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
+
 buildscript {
     repositories {
         maven { url "https://mirrors.tencent.com/nexus/repository/maven-public/" }
     }
-    dependencies { classpath 'com.github.panpf.bintray-publish:bintray-publish:1.0.0' }
+//    dependencies { classpath 'com.github.panpf.bintray-publish:bintray-publish:1.0.0' }
 }
